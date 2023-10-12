@@ -537,8 +537,9 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
  * @return {object} 404 - Error response if operation not found
  * @example request - Example request body
  * {
- *   "operationId": "some-uuid",
- *   "code": "12345"
+ *   "recipientTgId": "some-id",
+ *   "amount": "10",
+ *   "message": "optional message"
  * }
  * @example response - 200 - Success response example
  * {
