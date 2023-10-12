@@ -22,6 +22,7 @@ import {
 
 const router = express.Router();
 const operations = {};
+const connectedClients = {};
 
 /**
  * POST /v1/init
@@ -197,9 +198,13 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     if (!session) {
       return res.status(200).json([]);
     }
-    const client = TGClient(new StringSession(decrypt(session)));
-    await client.connect();
 
+    const client =
+      connectedClients[user.id.toString()] ||
+      TGClient(new StringSession(decrypt(session)));
+    if (!client.connected) {
+      await client.connect();
+    }
     if (!client.connected) {
       return res.status(200).json([]);
     }
@@ -273,6 +278,13 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
     const userDoc = await db
       .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
+    const session = userDoc.telegramSession;
+    if (session) {
+      const client = TGClient(new StringSession(decrypt(session)));
+      await client.connect();
+      connectedClients[user.id.toString()] = client;
+    }
+
     const updateData = {
       $inc: { webAppOpened: 1 },
       $set: {
@@ -505,9 +517,13 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
     if (!session) {
       return res.status(200).json({ photo: '' });
     }
-    const client = TGClient(new StringSession(decrypt(session)));
-    await client.connect();
 
+    const client =
+      connectedClients[user.id.toString()] ||
+      TGClient(new StringSession(decrypt(session)));
+    if (!client.connected) {
+      await client.connect();
+    }
     if (!client.connected) {
       return res.status(200).json({ photo: '' });
     }
