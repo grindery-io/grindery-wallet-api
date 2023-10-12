@@ -39,49 +39,45 @@ const operations = {};
  * }
  */
 router.post('/init', telegramHashIsValid, async (req, res) => {
-  try {
-    const operationId = uuid();
+  const operationId = uuid();
 
-    const client = TGClient(new StringSession(''));
-    operations[operationId] = {
-      status: 'pending',
-      client: client,
-      phoneCodePromise: null,
-    };
-    const globalPhoneCodePromise = createTelegramPromise();
-    operations[operationId].phoneCodePromise = globalPhoneCodePromise;
+  const client = TGClient(new StringSession(''));
+  operations[operationId] = {
+    status: 'pending',
+    client: client,
+    phoneCodePromise: null,
+  };
+  const globalPhoneCodePromise = createTelegramPromise();
+  operations[operationId].phoneCodePromise = globalPhoneCodePromise;
 
-    client
-      .start({
-        phoneNumber: req.body.phone,
-        password: async () => {
-          return req.body.password;
-        },
-        phoneCode: async () => {
-          if (operations[operationId].phoneCodePromise) {
-            let code = await operations[operationId].phoneCodePromise.promise;
-            operations[operationId].phoneCodePromise = createTelegramPromise();
-            return code;
-          }
-          throw new Error('Phone code promise not found.');
-        },
-        onError: (err) => {
-          console.error('Init tg auth error:', err);
-          operations[operationId].status = 'error';
-          operations[operationId].error = err;
-        },
-      })
-      .then(() => {
-        operations[operationId].status = 'completed';
-      });
-
-    res.json({
-      operationId: operationId,
-      status: 'pending',
+  client
+    .start({
+      phoneNumber: req.body.phone,
+      password: async () => {
+        return req.body.password;
+      },
+      phoneCode: async () => {
+        if (operations[operationId].phoneCodePromise) {
+          let code = await operations[operationId].phoneCodePromise.promise;
+          operations[operationId].phoneCodePromise = createTelegramPromise();
+          return code;
+        }
+        throw new Error('Phone code promise not found.');
+      },
+      onError: (err) => {
+        console.error('Init tg auth error:', err);
+        operations[operationId].status = 'error';
+        operations[operationId].error = err;
+      },
+    })
+    .then(() => {
+      operations[operationId].status = 'completed';
     });
-  } catch (error) {
-    return res.status(500).send({ msg: 'An error occurred', error });
-  }
+
+  res.json({
+    operationId: operationId,
+    status: 'pending',
+  });
 });
 
 /**
@@ -110,39 +106,35 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.post('/callback', telegramHashIsValid, async (req, res) => {
-  try {
-    const operationId = req.body.operationId;
-    const code = req.body.code;
+  const operationId = req.body.operationId;
+  const code = req.body.code;
 
-    if (operations[operationId]) {
-      operations[operationId].phoneCodePromise.resolve(code);
-      const session = operations[operationId].client.session.save();
-      try {
-        const user = getUser(req);
-        if (!user?.id) {
-          return res.status(401).send({ msg: 'Invalid user' });
+  if (operations[operationId]) {
+    operations[operationId].phoneCodePromise.resolve(code);
+    const session = operations[operationId].client.session.save();
+    try {
+      const user = getUser(req);
+      if (!user?.id) {
+        return res.status(401).send({ msg: 'Invalid user' });
+      }
+
+      const db = await Database.getInstance(req);
+      await db.collection('users').updateOne(
+        { userTelegramID: user.id.toString() },
+        {
+          $set: {
+            telegramSession: encrypt(session),
+            telegramSessionSavedDate: new Date(),
+          },
         }
-
-        const db = await Database.getInstance(req);
-        await db.collection('users').updateOne(
-          { userTelegramID: user.id.toString() },
-          {
-            $set: {
-              telegramSession: encrypt(session),
-              telegramSessionSavedDate: new Date(),
-            },
-          }
-        );
-        res.json({
-          session: encodeURIComponent(encrypt(session)),
-          status: 'code_received',
-        });
-      } catch (error) {}
-    } else {
-      res.status(404).json({ error: 'Operation not found' });
-    }
-  } catch (error) {
-    return res.status(500).send({ msg: 'An error occurred', error });
+      );
+      res.json({
+        session: encodeURIComponent(encrypt(session)),
+        status: 'code_received',
+      });
+    } catch (error) {}
+  } else {
+    res.status(404).json({ error: 'Operation not found' });
   }
 });
 
