@@ -202,9 +202,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     const client =
       connectedClients[user.id.toString()] ||
       TGClient(new StringSession(decrypt(session)));
-    if (!client.connected) {
-      await client.connect();
-    }
+    await client.connect();
     if (!client.connected) {
       return res.status(200).json([]);
     }
@@ -521,9 +519,7 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
     const client =
       connectedClients[user.id.toString()] ||
       TGClient(new StringSession(decrypt(session)));
-    if (!client.connected) {
-      await client.connect();
-    }
+    await client.connect();
     if (!client.connected) {
       return res.status(200).json({ photo: '' });
     }
