@@ -64,14 +64,17 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         }
         throw new Error('Phone code promise not found.');
       },
-      onError: (err) => {
-        console.error('Init tg auth error:', err);
+      onError: (error) => {
+        console.error('Init tg auth error:', error);
         operations[operationId].status = 'error';
-        operations[operationId].error = err;
+        operations[operationId].error = error;
       },
     })
     .then(() => {
       operations[operationId].status = 'completed';
+    })
+    .catch((error) => {
+      console.error('Init tg auth error catched:', error);
     });
 
   res.json({
