@@ -1,0 +1,31 @@
+name: Test changes
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+  push:
+    branches:
+      - main
+      - staging
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+        env:
+          G1_POLYGON_ADDRESS: ${{ secrets.G1_POLYGON_ADDRESS }}
+          SOURCE_TG_ID: ${{ secrets.SOURCE_TG_ID }}
+          SOURCE_WALLET_ADDRESS: ${{ secrets.SOURCE_WALLET_ADDRESS }}
+          FLOWXO_NEW_USER_WEBHOOK: ${{ secrets.FLOWXO_NEW_USER_WEBHOOK }}
+          FLOWXO_NEW_SIGNUP_REWARD_WEBHOOK: ${{ secrets.FLOWXO_NEW_SIGNUP_REWARD_WEBHOOK }}
+          FLOWXO_NEW_REFERRAL_REWARD_WEBHOOK: ${{ secrets.FLOWXO_NEW_REFERRAL_REWARD_WEBHOOK }}
+          FLOWXO_NEW_TRANSACTION_WEBHOOK: ${{ secrets.FLOWXO_NEW_TRANSACTION_WEBHOOK }}
+          FLOWXO_NEW_LINK_REWARD_WEBHOOK: ${{ secrets.FLOWXO_NEW_LINK_REWARD_WEBHOOK }}
+          ATLAS_URI: ${{ secrets.ATLAS_URI }}
