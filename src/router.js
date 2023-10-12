@@ -1,29 +1,34 @@
 import express from 'express';
 import { Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import createTelegramPromise from './utils/telegramPromise.js';
+import createTelegramPromise from './utils/createTelegramPromise.js';
 import { uuid } from 'uuidv4';
 import TGClient from './utils/telegramClient.js';
-import { telegramHashIsValid } from './utils/auth.js';
 import { Database } from './db/conn.js';
 import { getUser } from './utils/telegram.js';
 import axios from 'axios';
 import { decrypt, encrypt } from './utils/crypt.js';
 import Web3 from 'web3';
 import { CHAIN_MAPPING } from './utils/chains.js';
-import ERC20 from './routes/abi/ERC20.json' assert { type: 'json' };
+import ERC20 from './abi/ERC20.json' assert { type: 'json' };
 import { base } from './utils/airtableClient.js';
 import BigNumber from 'bignumber.js';
+import telegramHashIsValid from './utils/telegramHashIsValid.js';
+import {
+  REWARDS_COLLECTION,
+  TRANSFERS_COLLECTION,
+  USERS_COLLECTION,
+} from './utils/constants.js';
 
 const router = express.Router();
 const operations = {};
 
 /**
- * POST /v1/telegram/init
+ * POST /v1/init
  *
  * @summary Initialize a Telegram Session
  * @description Start a session with Telegram using phone number and password, awaiting a phone code for full authentication.
- * @tags Telegram
+ * @tags Authentication
  * @security BearerAuth
  * @param {object} request.body - The request body containing the phone and password.
  * @return {object} 200 - Success response with operation ID and status
@@ -86,11 +91,11 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * POST /v1/telegram/callback
+ * POST /v1/callback
  *
  * @summary Set Phone Code for Authentication
  * @description Provide the phone code received on the user's device to authenticate the session with Telegram.
- * @tags Telegram
+ * @tags Authentication
  * @security BearerAuth
  * @param {object} request.body - The request body containing the operation ID and phone code.
  * @return {object} 200 - Success response with session and status
@@ -124,7 +129,7 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
       }
 
       const db = await Database.getInstance(req);
-      await db.collection('users').updateOne(
+      await db.collection(USERS_COLLECTION).updateOne(
         { userTelegramID: user.id.toString() },
         {
           $set: {
@@ -144,11 +149,11 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/status
+ * GET /v1/status
  *
  * @summary Check Telegram Connection Status
  * @description Check if the Telegram client is currently connected.
- * @tags Telegram
+ * @tags Authentication
  * @security BearerAuth
  * @param {string} request.query.session - The session string to identify the client.
  * @return {object} 200 - Success response with connection status
@@ -166,11 +171,11 @@ router.get('/status', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/contacts
+ * GET /v1/contacts
  *
  * @summary Get Telegram Contacts
  * @description Retrieve telegram user's contact list.
- * @tags Telegram
+ * @tags Contacts
  * @security BearerAuth
  * @return {object} 200 - Success response with the list of contacts
  * @example response - 200 - Success response example (simplified for brevity)
@@ -186,7 +191,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
     const userDoc = await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
     const session = userDoc.telegramSession;
     if (!session) {
@@ -205,7 +210,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     );
 
     const usersArray = await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .find({
         $or: contacts.users.map((user) => ({
           userTelegramID: user.id.toString(),
@@ -214,7 +219,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       .toArray();
 
     const transfers = await db
-      .collection('transfers')
+      .collection(TRANSFERS_COLLECTION)
       .find({ senderTgId: user.id.toString() })
       .toArray();
 
@@ -240,11 +245,11 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/me
+ * GET /v1/me
  *
  * @summary Get telegram webapp user
  * @description Gets telegram webapp user record from DB collection.
- * @tags Telegram
+ * @tags User
  * @security BearerAuth
  * @return {object} 200 - Success response with connection status
  * @example response - 200 - Success response example
@@ -266,7 +271,7 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
     const userDoc = await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
     const updateData = {
       $inc: { webAppOpened: 1 },
@@ -281,7 +286,7 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
       updateData.$set.telegramSessionSavedDate = new Date();
     }
     await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .updateOne({ userTelegramID: user.id.toString() }, updateData);
 
     return res.status(200).send(userDoc);
@@ -292,11 +297,11 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/activity
+ * GET /v1/activity
  *
  * @summary Get telegram user activity
  * @description Gets telegram user activity (transactions) from DB collection.
- * @tags Telegram
+ * @tags Activity
  * @security BearerAuth
  * @return {object} 200 - Success response with connection status
  * @example response - 200 - Success response example
@@ -327,7 +332,7 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
     const db = await Database.getInstance(req);
     return res.status(200).send(
       await db
-        .collection('transfers')
+        .collection(TRANSFERS_COLLECTION)
         .find({
           $or: [
             { senderTgId: user.id.toString() },
@@ -343,11 +348,11 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/user
+ * GET /v1/user
  *
- * @summary Get telegram user public profile
- * @description Gets telegram user public profile from DB collection.
- * @tags Telegram
+ * @summary Get bot user public profile
+ * @description Gets bot user public profile from DB collection.
+ * @tags User
  * @security BearerAuth
  * @param {string} request.query.id - The telegram id of the user.
  * @return {object} 200 - Success response with connection status
@@ -373,7 +378,9 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
     return res
       .status(200)
       .send(
-        await db.collection('users').findOne({ userTelegramID: req.query.id })
+        await db
+          .collection(USERS_COLLECTION)
+          .findOne({ userTelegramID: req.query.id })
       );
   } catch (error) {
     console.error('Error getting user', error);
@@ -382,11 +389,11 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/rewards
+ * GET /v1/rewards
  *
  * @summary Get telegram user rewards
  * @description Gets telegram user rewards (transactions) from DB collection.
- * @tags Telegram
+ * @tags Rewards
  * @security BearerAuth
  * @return {object} 200 - Success response with connection status
  * @example response - 200 - Success response example
@@ -417,13 +424,13 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
     const sent = await db
-      .collection('transfers')
+      .collection(TRANSFERS_COLLECTION)
       .find({ senderTgId: user.id.toString() })
       .toArray();
     let users = [];
     if (sent.length > 0) {
       users = await db
-        .collection('users')
+        .collection(USERS_COLLECTION)
         .find({
           $or: sent.map((col) => ({
             userTelegramID: col.recipientTgId,
@@ -448,7 +455,7 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
     ];
 
     const received = await db
-      .collection('rewards')
+      .collection(REWARDS_COLLECTION)
       .find({
         userTelegramID: user.id.toString(),
       })
@@ -465,11 +472,11 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/user/photo
+ * GET /v1/user/photo
  *
  * @summary Get telegram user public profile photo
  * @description Gets telegram user public profile photo from Telegram API
- * @tags Telegram
+ * @tags Contacts
  * @security BearerAuth
  * @param {object} request.query.username - Contact username
  * @return {object} 200 - Success response with photo as base64 url string
@@ -492,7 +499,7 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
     const userDoc = await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
     const session = userDoc.telegramSession;
     if (!session) {
@@ -519,11 +526,11 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * POST /v1/telegram/send
+ * POST /v1/send
  *
  * @summary Send transaction
  * @description Send transaction to a contact from telegram webapp
- * @tags Telegram
+ * @tags Tokens
  * @security BearerAuth
  * @param {object} request.body - The request body containing the transaction details
  * @return {object} 200 - Success response with session and status
@@ -600,11 +607,11 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/leaderboard
+ * GET /v1/leaderboard
  *
  * @summary Get leaderboard list
  * @description Fetches leaderboard data by aggregating user statistics based on transaction and reward records. Allows sorting, pagination, and filter features. Additionally, retrieves users' balances using Web3 integration.
- * @tags Telegram
+ * @tags Leaderboard
  * @param {string} chainId.query - The chain ID for Web3 operations. Defaults to "eip155:137".
  * @param {number} page.query - Specifies the page number for pagination. Defaults to 1.
  * @param {number} limit.query - Defines the number of results to return per page. Defaults to 10.
@@ -613,7 +620,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
  * @return {object[]} 200 - Success response, returning an array of aggregated user statistics tailored for the leaderboard.
  * @return {object} 500 - Error response containing an error message and details.
  * @example request - Sample Request
- * GET /v1/telegram/leaderboard?page=1&limit=10&sortBy=txCount&order=desc
+ * GET /v1/leaderboard?page=1&limit=10&sortBy=txCount&order=desc
  * @example response - 200 - Sample Success Response
  * [
  *   {
@@ -655,11 +662,11 @@ router.get('/leaderboard', async (req, res) => {
     const db = await Database.getInstance(req);
 
     const leaderboardData = await db
-      .collection('users')
+      .collection(USERS_COLLECTION)
       .aggregate([
         {
           $lookup: {
-            from: 'transfers',
+            from: TRANSFERS_COLLECTION,
             localField: 'userTelegramID',
             foreignField: 'senderTgId',
             as: 'transactions',
@@ -667,10 +674,10 @@ router.get('/leaderboard', async (req, res) => {
         },
         {
           $lookup: {
-            from: 'rewards',
+            from: REWARDS_COLLECTION,
             localField: 'userTelegramID',
             foreignField: 'userTelegramID',
-            as: 'rewards',
+            as: REWARDS_COLLECTION,
           },
         },
         {
@@ -780,12 +787,12 @@ router.get('/leaderboard', async (req, res) => {
   }
 });
 
-/*
- * GET /v1/telegram/config
+/**
+ * GET /v1/config
  *
  * @summary Get wallet config
  * @description Gets wallet config and dynamic data from Airtable
- * @tags Telegram
+ * @tags Config
  * @security BearerAuth
  * @return {object} 200 - Success response with an array of raw airtable records
  * @return {object} 404 - Error response
@@ -817,11 +824,11 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/telegram/stats
+ * GET /v1/stats
  *
  * @summary Get telegram user stats
  * @description Gets telegram user stats, such as amount of transactions, rewards, and referrals.
- * @tags Telegram
+ * @tags User
  * @security BearerAuth
  * @return {object} 200 - Success response with stats object
  * @example response - 200 - Success response example
@@ -841,18 +848,18 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
     const db = await Database.getInstance(req);
 
     const sentTransactions = await db
-      .collection('transfers')
+      .collection(TRANSFERS_COLLECTION)
       .countDocuments({ senderTgId: user.id.toString() });
 
     const receivedTransactions = await db
-      .collection('transfers')
+      .collection(TRANSFERS_COLLECTION)
       .countDocuments({ recipientTgId: user.id.toString() });
 
     const rewards = await db
-      .collection('rewards')
+      .collection(REWARDS_COLLECTION)
       .countDocuments({ userTelegramID: user.id.toString() });
 
-    const referrals = await db.collection('rewards').countDocuments({
+    const referrals = await db.collection(REWARDS_COLLECTION).countDocuments({
       userTelegramID: user.id.toString(),
       reason: '2x_reward',
     });
@@ -869,6 +876,20 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
   }
 });
 
+/**
+ * POST /v1/balance
+ *
+ * @summary Request user token balance
+ * @description Gets bot user tokens balance from chain
+ * @tags User
+ * @security BearerAuth
+ * @return {object} 200 - Success response with balance
+ * @example response - 200 - Success response example
+ * {
+ *   "balanceWei": 1000000000000000000,
+ *   "balanceEther": 1
+ * }
+ */
 router.post('/balance', async (req, res) => {
   try {
     const web3 = new Web3(CHAIN_MAPPING[req.body.chainId][1]);
