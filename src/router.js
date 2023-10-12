@@ -75,6 +75,8 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
     })
     .catch((error) => {
       console.error('Init tg auth error catched:', error);
+      operations[operationId].status = 'error';
+      operations[operationId].error = error;
     });
 
   res.json({
