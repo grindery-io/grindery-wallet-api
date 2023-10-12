@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import './loadEnvironment.js';
 import router from './router.js';
+import appPackage from '../package.json';
 
 const { json, urlencoded } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -12,11 +13,11 @@ const __dirname = path.dirname(__filename);
 
 const options = {
   info: {
-    version: '0.0.1',
+    version: appPackage.version || '0.0.1',
     title: 'Grindery Wallet API',
-    description: 'API for Grindery Wallet',
+    description: appPackage.description || '',
     license: {
-      name: 'MIT',
+      name: appPackage.license || 'MIT',
     },
   },
   security: {
