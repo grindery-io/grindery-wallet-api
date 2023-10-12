@@ -415,14 +415,17 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       .collection('transfers')
       .find({ senderTgId: user.id.toString() })
       .toArray();
-    const users = await db
-      .collection('users')
-      .find({
-        $or: sent.map((col) => ({
-          userTelegramID: col.recipientTgId,
-        })),
-      })
-      .toArray();
+    let users = [];
+    if (sent.length > 0) {
+      users = await db
+        .collection('users')
+        .find({
+          $or: sent.map((col) => ({
+            userTelegramID: col.recipientTgId,
+          })),
+        })
+        .toArray();
+    }
 
     const key = 'recipientTgId';
     const pending = [
