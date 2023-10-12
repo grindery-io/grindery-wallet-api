@@ -269,10 +269,10 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
         webAppOpenedLastDate: new Date(),
       },
     };
-    if (!userDoc.webAppOpenedFirstDate) {
+    if (!userDoc?.webAppOpenedFirstDate) {
       updateData.$set.webAppOpenedFirstDate = new Date();
     }
-    if (!userDoc.telegramSessionSavedDate && userDoc.telegramSession) {
+    if (!userDoc?.telegramSessionSavedDate && userDoc?.telegramSession) {
       updateData.$set.telegramSessionSavedDate = new Date();
     }
     await db
