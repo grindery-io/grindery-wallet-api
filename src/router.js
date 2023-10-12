@@ -649,8 +649,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
  *     "lastTx": {},
  *     "txCount": 5,
  *     "rewardsCount": 3,
- *     "referralsCount": 2,
- *     "balance": 0.5
+ *     "referralsCount": 2
  *   }
  * ]
  * @example response - 500 - Sample Error Response
@@ -661,7 +660,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
  */
 router.get('/leaderboard', async (req, res) => {
   try {
-    const chainId = req.query.chainId || 'eip155:137';
+    //const chainId = req.query.chainId || 'eip155:137';
 
     // pagination params
     const page = parseInt(req.query.page, 10) || 1;
@@ -774,19 +773,20 @@ router.get('/leaderboard', async (req, res) => {
       ])
       .toArray();
 
-    const web3 = new Web3(CHAIN_MAPPING[chainId][1]);
+    //const web3 = new Web3(CHAIN_MAPPING[chainId][1]);
 
-    const contract = new web3.eth.Contract(
+    /*const contract = new web3.eth.Contract(
       ERC20,
       process.env.G1_POLYGON_ADDRESS
-    );
+    );*/
 
     for (let user of leaderboardData) {
-      const balance = await contract.methods
+      /*const balance = await contract.methods
         .balanceOf(user.user.patchwallet)
         .call();
 
-      user.balance = web3.utils.fromWei(balance);
+      user.balance = web3.utils.fromWei(balance);*/
+
       const userDoc = user.user;
       if (userDoc.telegramSession) {
         userDoc.telegramSession = 'hidden';
