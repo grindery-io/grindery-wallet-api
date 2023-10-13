@@ -580,24 +580,32 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
     if (isSingle) {
+      const params = {
+        recipientTgId: req.body.recipientTgId,
+        amount: req.body.amount,
+        senderTgId: user.id.toString(),
+      };
+      if (req.body.message) {
+        params.message = req.body.message;
+      }
       data = {
         event: 'new_transaction',
-        params: {
-          recipientTgId: req.body.recipientTgId,
-          amount: req.body.amount,
-          senderTgId: user.id.toString(),
-          message: req.body.message,
-        },
+        params,
       };
     } else {
       data = {
         event: 'new_transaction_batch',
-        params: req.body.recipientTgId.map((id) => ({
-          recipientTgId: id,
-          amount: req.body.amount,
-          senderTgId: user.id.toString(),
-          message: req.body.message,
-        })),
+        params: req.body.recipientTgId.map((id) => {
+          const params = {
+            recipientTgId: id,
+            amount: req.body.amount,
+            senderTgId: user.id.toString(),
+          };
+          if (req.body.message) {
+            params.message = req.body.message;
+          }
+          return params;
+        }),
       };
     }
 
