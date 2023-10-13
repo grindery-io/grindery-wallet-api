@@ -22,7 +22,6 @@ import {
 
 const router = express.Router();
 const operations = {};
-const connectedClients = {};
 
 /**
  * POST /v1/init
@@ -199,9 +198,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       return res.status(200).json([]);
     }
 
-    const client =
-      connectedClients[session] ||
-      TGClient(new StringSession(decrypt(session)));
+    const client = TGClient(new StringSession(decrypt(session)));
     await client.connect();
     if (!client.connected) {
       return res.status(200).json([]);
@@ -211,6 +208,8 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
         hash: BigInt('-4156887774564'),
       })
     );
+
+    await client.disconnect();
 
     const usersArray = await db
       .collection(USERS_COLLECTION)
@@ -276,16 +275,6 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
     const userDoc = await db
       .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
-    const session = userDoc.telegramSession;
-    if (session) {
-      const client =
-        connectedClients[session] ||
-        TGClient(new StringSession(decrypt(session)));
-      await client.connect();
-      if (!connectedClients[session]) {
-        connectedClients[session] = client;
-      }
-    }
 
     const updateData = {
       $inc: { webAppOpened: 1 },
@@ -525,10 +514,9 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
       return res.status(200).json({ photo: '' });
     }
 
-    const client =
-      connectedClients[session] ||
-      TGClient(new StringSession(decrypt(session)));
+    const client = TGClient(new StringSession(decrypt(session)));
     await client.connect();
+
     if (!client.connected) {
       return res.status(200).json({ photo: '' });
     }
@@ -536,6 +524,8 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
     const photo = await client.downloadProfilePhoto(username);
 
     const base64Photo = btoa(String.fromCharCode(...new Uint8Array(photo)));
+
+    await client.disconnect();
 
     return res.status(200).json({
       photo: base64Photo ? `data:image/png;base64,${base64Photo}` : '',
