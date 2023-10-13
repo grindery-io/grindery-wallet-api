@@ -567,7 +567,7 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
  */
 router.post('/send', telegramHashIsValid, async (req, res) => {
   const user = getUser(req);
-  if (!user?.id) {
+  if (!user || !user.id) {
     return res.status(401).send({ msg: 'Invalid user' });
   }
   if (!req.body.recipientTgId) {
