@@ -353,6 +353,8 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
             { recipientTgId: user.id.toString() },
           ],
         })
+        .sort({ dateAdded: -1 })
+        .limit(100)
         .toArray()
     );
   } catch (error) {
@@ -450,6 +452,7 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
             userTelegramID: col.recipientTgId,
           })),
         })
+        .limit(100)
         .toArray();
     }
 
@@ -473,6 +476,8 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       .find({
         userTelegramID: user.id.toString(),
       })
+      .limit(100)
+      .sort({ dateAdded: -1 })
       .toArray();
 
     return res.status(200).send({
