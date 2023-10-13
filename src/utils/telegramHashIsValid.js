@@ -5,7 +5,7 @@ const telegramHashIsValid = async (req, res, next) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
   const authorization = req.headers['authorization'];
-  const hash = authorization.split(' ')[1];
+  const hash = authorization?.split(' ')[1];
   const data = Object.fromEntries(new URLSearchParams(hash));
   const encoder = new TextEncoder();
   const checkString = Object.keys(data)
