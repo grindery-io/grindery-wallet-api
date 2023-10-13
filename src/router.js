@@ -292,6 +292,10 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
       .collection(USERS_COLLECTION)
       .updateOne({ userTelegramID: user.id.toString() }, updateData);
 
+    if (userDoc?.telegramSession) {
+      userDoc.telegramSession = decrypt(userDoc.telegramSession);
+    }
+
     return res.status(200).send(userDoc);
   } catch (error) {
     console.error('Error getting user', error);
