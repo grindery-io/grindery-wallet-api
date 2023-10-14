@@ -4,8 +4,9 @@ import expressJSDocSwagger from 'express-jsdoc-swagger';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import './loadEnvironment.js';
-import router from './router.js';
 import appPackage from '../package.json' assert { type: 'json' };
+import v1 from './v1.js';
+import v2 from './v2.js';
 
 const { json, urlencoded } = pkg;
 const __filename = fileURLToPath(import.meta.url);
@@ -121,6 +122,7 @@ const server = app.listen(port, function () {
   console.log(`Wallet API listening on port ${port}`);
 });
 
-app.use('/v1/', router);
+app.use('/v1/', v1);
+app.use('/v2/', v2);
 
 export default app;
