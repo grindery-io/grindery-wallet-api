@@ -781,6 +781,9 @@ router.get('/leaderboard', async (req, res) => {
       ])
       .toArray();
 
+    const leaderboardDataLength = await db
+      .collection(USERS_COLLECTION)
+      .countDocuments();
     //const web3 = new Web3(CHAIN_MAPPING[chainId][1]);
 
     /*const contract = new web3.eth.Contract(
@@ -801,7 +804,10 @@ router.get('/leaderboard', async (req, res) => {
       }
     }
 
-    return res.status(200).send(leaderboardData);
+    return res.status(200).send({
+      items: leaderboardData,
+      total: leaderboardDataLength,
+    });
   } catch (error) {
     console.error('Error getting leaderboard data', error);
     return res.status(500).send({ msg: 'An error occurred', error });
