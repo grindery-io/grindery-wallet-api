@@ -781,7 +781,9 @@ router.get('/leaderboard', async (req, res) => {
       ])
       .toArray();
 
-    const leaderboardDataLength = 100000;
+    const leaderboardDataLength = await db
+      .collection(USERS_COLLECTION)
+      .estimatedDocumentCount();
     //const web3 = new Web3(CHAIN_MAPPING[chainId][1]);
 
     /*const contract = new web3.eth.Contract(

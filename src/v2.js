@@ -230,9 +230,13 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
       },
       {
         $addFields: {
-          recipientIsUser: {
-            $exists: {
-              $arrayElemAt: ['$users', 0],
+          transactionRecipientIsUser: {
+            $cond: {
+              if: {
+                $gte: [{ $size: '$users' }, 1],
+              },
+              then: true,
+              else: false,
             },
           },
         },
@@ -244,7 +248,16 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
               senderTgId: user.id.toString(),
             },
             {
-              recipientIsUser: true,
+              transactionRecipientIsUser: false,
+            },
+            {
+              recipientTgId: { $exists: true },
+            },
+            {
+              recipientTgId: { $ne: null },
+            },
+            {
+              recipientTgId: { $ne: '' },
             },
           ],
         },
@@ -255,24 +268,26 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
       {
         $skip: skip,
       },
-      {
-        $limit: limit,
-      },
     ];
-
-    const total = await db
-      .collection(TRANSFERS_COLLECTION)
-      .aggregate(aggregate)
-      .count();
 
     const docs = await db
       .collection(TRANSFERS_COLLECTION)
-      .aggregate(aggregate)
+      .aggregate([
+        ...aggregate,
+        {
+          $limit: limit,
+        },
+      ])
+      .toArray();
+
+    const total = await db
+      .collection(TRANSFERS_COLLECTION)
+      .aggregate([...aggregate, { $count: 'Total' }])
       .toArray();
 
     return res.status(200).send({
       docs,
-      total,
+      total: total?.[0]?.Total || 0,
     });
   } catch (error) {
     console.error('Error getting rewards', error);
