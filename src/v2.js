@@ -2,7 +2,11 @@ import express from 'express';
 import { Database } from './db/conn.js';
 import { getUser } from './utils/telegram.js';
 import telegramHashIsValid from './utils/telegramHashIsValid.js';
-import { TRANSFERS_COLLECTION, USERS_COLLECTION } from './utils/constants.js';
+import {
+  REWARDS_COLLECTION,
+  TRANSFERS_COLLECTION,
+  USERS_COLLECTION,
+} from './utils/constants.js';
 
 const router = express.Router();
 
