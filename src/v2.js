@@ -135,15 +135,20 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
 
-    return res.status(200).send(
-      await db.collection(TRANSFERS_COLLECTION).findOne({
-        $or: [
-          { transactionHash: req.params.id },
-          { _id: new ObjectId(req.params.id) },
-          { TxId: req.params.id },
-        ],
-      })
-    );
+    const find = {
+      $or: [],
+    };
+
+    if (req.params.id.startsWith('0x')) {
+      find.$or.push({ transactionHash: req.params.id });
+      find.$or.push({ TxId: req.params.id });
+    } else {
+      find.$or.push({ _id: new ObjectId(req.params.id) });
+    }
+
+    return res
+      .status(200)
+      .send(await db.collection(TRANSFERS_COLLECTION).findOne(find));
   } catch (error) {
     console.error('Error getting activity by id', error);
     return res.status(500).send({ msg: 'An error occurred', error });
