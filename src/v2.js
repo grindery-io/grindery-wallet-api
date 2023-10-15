@@ -7,6 +7,7 @@ import {
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
 } from './utils/constants.js';
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
@@ -93,6 +94,58 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
     });
   } catch (error) {
     console.error('Error getting activity', error);
+    return res.status(500).send({ msg: 'An error occurred', error });
+  }
+});
+
+/**
+ * GET /v2/activity
+ *
+ * @summary Get single activity
+ * @description Gets telegram user activity (transactions) from DB collection by id.
+ * @tags Activity
+ * @security BearerAuth
+ * @param {string} id.params - Transaction hash, or doc id or internal transaction id
+ * @return {object} 200 - Success response with single transaction
+ * @example response - 200 - Success response example
+ * {
+ *   "_id": "6asdfghjff2936fefd07cf93",
+ *   "TxId": "xdc3ooo",
+ *   "chainId": "eip155:137",
+ *   "tokenSymbol": "g1",
+ *   "tokenAddress": "0xe36BD65609c08Cgavehr3520293523CF4560533d0",
+ *   "senderTgId": "1899300004",
+ *   "senderWallet": "0x1234556751f3D2e4dE9D8B860311936090bcaC95",
+ *   "senderName": "undefined",
+ *   "recipientTgId": "5900000139",
+ *   "recipientWallet": "0x43371FD1Df1a3ee6550ca42f61956feasdfghj33",
+ *   "tokenAmount": "10",
+ *   "transactionHash": "0xdtgbrfve594b7950ef2e5fe6efa89eb4daf6e1424b641eee0dd4db2f8e5fdf8f",
+ *   "dateAdded": "2021-01-01T00:00:00.000Z"
+ * }
+ */
+router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).send({ msg: 'Invalid id' });
+  }
+  try {
+    const user = getUser(req);
+    if (!user?.id) {
+      return res.status(401).send({ msg: 'Invalid user' });
+    }
+    const db = await Database.getInstance(req);
+
+    return res.status(200).send(
+      await db.collection(TRANSFERS_COLLECTION).findOne({
+        $or: [
+          { transactionHash: req.params.id },
+          { _id: new ObjectId(req.params.id) },
+          { TxId: req.params.id },
+        ],
+      })
+    );
+  } catch (error) {
+    console.error('Error getting activity by id', error);
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
