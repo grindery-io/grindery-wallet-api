@@ -1,27 +1,27 @@
 import express from 'express';
 import { Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import createTelegramPromise from './utils/createTelegramPromise.js';
+import createTelegramPromise from './utils/createTelegramPromise';
 import { uuid } from 'uuidv4';
-import TGClient from './utils/telegramClient.js';
-import { Database } from './db/conn.js';
-import { getUser } from './utils/telegram.js';
+import TGClient from './utils/telegramClient';
+import { Database } from './db/conn';
+import { getUser } from './utils/telegram';
 import axios from 'axios';
-import { decrypt, encrypt } from './utils/crypt.js';
+import { decrypt, encrypt } from './utils/crypt';
 import Web3 from 'web3';
-import { CHAIN_MAPPING } from './utils/chains.js';
-import ERC20 from './abi/ERC20.json' assert { type: 'json' };
-import { base } from './utils/airtableClient.js';
+import { CHAIN_MAPPING } from './utils/chains';
+import { base } from './utils/airtableClient';
 import BigNumber from 'bignumber.js';
-import telegramHashIsValid from './utils/telegramHashIsValid.js';
+import telegramHashIsValid from './utils/telegramHashIsValid';
 import {
   REWARDS_COLLECTION,
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
-} from './utils/constants.js';
+} from './utils/constants';
 
+const ERC20 = require('./abi/ERC20.json');
 const router = express.Router();
-const operations = {};
+const operations: any = {};
 
 /**
  * POST /v1/init
@@ -205,6 +205,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     }
     const contacts = await client.invoke(
       new Api.contacts.GetContacts({
+        // @ts-ignore
         hash: BigInt('-4156887774564'),
       })
     );
@@ -214,9 +215,10 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     const usersArray = await db
       .collection(USERS_COLLECTION)
       .find({
-        $or: contacts.users.map((user) => ({
-          userTelegramID: user.id.toString(),
-        })),
+        userTelegramID: {
+          // @ts-ignore
+          $in: contacts.users.map((user) => user.id.toString()),
+        },
       })
       .toArray();
 
@@ -226,15 +228,16 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       .toArray();
 
     res.status(200).json(
+      // @ts-ignore
       contacts.users.map((user) => ({
         ...user,
         isGrinderyUser: usersArray.find(
-          (u) => u.userTelegramID === user.id.toString()
+          (u: any) => u.userTelegramID === user.id.toString()
         )
           ? true
           : false,
         isInvited: transfers.find(
-          (transfer) => transfer.recipientTgId === user.id.toString()
+          (transfer: any) => transfer.recipientTgId === user.id.toString()
         )
           ? true
           : false,
@@ -276,7 +279,7 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
       .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: user.id.toString() });
 
-    const updateData = {
+    const updateData: any = {
       $inc: { webAppOpened: 1 },
       $set: {
         webAppOpenedLastDate: new Date(),
@@ -435,12 +438,12 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       .collection(TRANSFERS_COLLECTION)
       .find({ senderTgId: user.id.toString() })
       .toArray();
-    let users = [];
+    let users: any[] = [];
     if (sent.length > 0) {
       users = await db
         .collection(USERS_COLLECTION)
         .find({
-          $or: sent.map((col) => ({
+          $or: sent.map((col: any) => ({
             userTelegramID: col.recipientTgId,
           })),
         })
@@ -452,13 +455,13 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       ...new Map(
         sent
           .filter(
-            (col) =>
+            (col: any) =>
               !users
                 .map((user) => user.userTelegramID)
                 .includes(col.recipientTgId)
           )
-          .map((col) => ({ ...col, tokenAmount: '50' }))
-          .map((item) => [item[key], item])
+          .map((col: any) => ({ ...col, tokenAmount: '50' }))
+          .map((item: any) => [item[key], item])
       ).values(),
     ];
 
@@ -522,9 +525,11 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
       return res.status(200).json({ photo: '' });
     }
 
-    const photo = await client.downloadProfilePhoto(username);
+    const photo = await client.downloadProfilePhoto(username as string);
 
-    const base64Photo = btoa(String.fromCharCode(...new Uint8Array(photo)));
+    const base64Photo = btoa(
+      String.fromCharCode(...new Uint8Array(photo as ArrayBufferLike))
+    );
 
     await client.disconnect();
 
@@ -580,7 +585,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
     if (isSingle) {
-      const params = {
+      const params: any = {
         recipientTgId: req.body.recipientTgId,
         amount: req.body.amount,
         senderTgId: user.id.toString(),
@@ -595,8 +600,8 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     } else {
       data = {
         event: 'new_transaction_batch',
-        params: req.body.recipientTgId.map((id) => {
-          const params = {
+        params: req.body.recipientTgId.map((id: any) => {
+          const params: any = {
             recipientTgId: id,
             amount: req.body.amount,
             senderTgId: user.id.toString(),
@@ -671,8 +676,8 @@ router.get('/leaderboard', async (req, res) => {
     //const chainId = req.query.chainId || 'eip155:137';
 
     // pagination params
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
     const skip = (page - 1) * limit;
 
     // sort params
@@ -738,7 +743,7 @@ router.get('/leaderboard', async (req, res) => {
           },
         },
         {
-          $sort: { [sortBy]: order },
+          $sort: { [sortBy as string]: order },
         },
         {
           $skip: skip,
@@ -795,7 +800,7 @@ router.get('/leaderboard', async (req, res) => {
  *
  */
 router.get('/config', telegramHashIsValid, async (req, res) => {
-  const configRecords = [];
+  const configRecords: any[] = [];
   base('Config')
     .select({
       maxRecords: 100,
@@ -811,7 +816,7 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
       function done(err) {
         if (err) {
           console.error(err);
-          return res.status(500).send({ msg: 'An error occurred', error });
+          return res.status(500).send({ msg: 'An error occurred', err });
         }
         return res.status(200).json({ config: configRecords });
       }
@@ -902,9 +907,9 @@ router.post('/balance', async (req, res) => {
         )
         .toString(),
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error?.message || '' });
   }
 });
 

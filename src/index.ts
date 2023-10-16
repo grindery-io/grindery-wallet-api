@@ -1,9 +1,9 @@
 import express from 'express';
 import pkg from 'body-parser';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
-import './loadEnvironment.js';
-import v1 from './v1.js';
-import v2 from './v2.js';
+import './loadEnvironment';
+import v1 from './v1';
+import v2 from './v2';
 const appPackage = require('../package.json');
 
 const { json, urlencoded } = pkg;

@@ -1,11 +1,12 @@
 import 'dotenv/config';
 import { TelegramClient } from 'telegram';
+import { Session } from 'telegram/sessions';
 
-const TGClient = (session) => {
+const TGClient = (session: string | Session) => {
   return new TelegramClient(
     session,
     Number(process.env.TELEGRAM_API_ID),
-    process.env.TELEGRAM_API_HASH,
+    process.env.TELEGRAM_API_HASH || '',
     {
       connectionRetries: 5,
       maxConcurrentDownloads: 1,

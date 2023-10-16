@@ -1,27 +1,27 @@
 import 'dotenv/config';
 
-const ANKR = (name) => [
+const ANKR = (name: string) => [
   `wss://rpc.ankr.com/${name}/ws/${process.env.ANKR_KEY || ''}`,
   `https://rpc.ankr.com/${name}/${process.env.ANKR_KEY || ''}`,
 ];
-const ALCHEMY = (name) => [
+const ALCHEMY = (name: string) => [
   `wss://${name}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
   `https://${name}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
 ];
-const GETBLOCK = (name, netType = 'mainnet') => [
+const GETBLOCK = (name: string, netType = 'mainnet') => [
   `wss://${name}.getblock.io/${process.env.GETBLOCK_API_KEY}/${netType}/`,
   `https://${name}.getblock.io/${process.env.GETBLOCK_API_KEY}/${netType}/`,
 ];
-const LAVANET = (wsPath, httpsPath) => [
+const LAVANET = (wsPath: string, httpsPath: string) => [
   `wss://g.w.lavanet.xyz:443/gateway/${wsPath}/${process.env.LAVANET_API_KEY}`,
   `https://g.w.lavanet.xyz:443/gateway/${httpsPath}/${process.env.LAVANET_API_KEY}`,
 ];
-const CHAINSTACK = (nodeId, key) => [
+const CHAINSTACK = (nodeId: string, key?: string) => [
   `wss://ws-${nodeId}.p2pify.com/${key || process.env.CHAINSTACK_API_KEY}`,
   `https://${nodeId}.p2pify.com/${key || process.env.CHAINSTACK_API_KEY}`,
 ];
 
-export const CHAIN_MAPPING = {
+export const CHAIN_MAPPING: any = {
   'eip155:1': ANKR('eth'),
   eth: ANKR('eth'),
   'eip155:42161': ANKR('arbitrum'),
@@ -42,7 +42,10 @@ export const CHAIN_MAPPING = {
   maticmum: ANKR('polygon_mumbai'),
   'eip155:5': ALCHEMY('eth-goerli'),
   'eip155:11155111': ANKR('eth_sepolia'),
-  'eip155:97': CHAINSTACK('nd-519-425-794', process.env.CHAINSTACK_API_KEY_2),
+  'eip155:97': CHAINSTACK(
+    'nd-519-425-794',
+    process.env.CHAINSTACK_API_KEY_2 || ''
+  ),
   'eip155:4002': ANKR('fantom_testnet'),
   'eip155:1442': ANKR('polygon_zkevm_testnet'),
   'eip155:338': CHAINSTACK('nd-326-373-985'),

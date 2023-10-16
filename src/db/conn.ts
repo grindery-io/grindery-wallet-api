@@ -8,12 +8,12 @@ const connectionString = process.env.ATLAS_URI || '';
 const client = new MongoClient(connectionString);
 
 export class Database {
-  static instance;
+  static instance: any;
 
-  static async getInstance(req) {
+  static async getInstance(req: any) {
     if (!Database.instance) {
       if (req !== 'unit-test') {
-        let conn;
+        let conn: any;
         try {
           conn = await client.connect();
         } catch (e) {

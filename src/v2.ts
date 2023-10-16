@@ -1,12 +1,12 @@
 import express from 'express';
-import { Database } from './db/conn.js';
-import { getUser } from './utils/telegram.js';
-import telegramHashIsValid from './utils/telegramHashIsValid.js';
+import { Database } from './db/conn';
+import { getUser } from './utils/telegram';
+import telegramHashIsValid from './utils/telegramHashIsValid';
 import {
   REWARDS_COLLECTION,
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
-} from './utils/constants.js';
+} from './utils/constants';
 import { ObjectId } from 'mongodb';
 
 const router = express.Router();
@@ -52,11 +52,11 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
     if (!user?.id) {
       return res.status(401).send({ msg: 'Invalid user' });
     }
-    const limit = req.query.limit ? parseInt(req.query.limit) : 25;
-    const skip = req.query.skip ? parseInt(req.query.skip) : 0;
-    const sort = req.query.sort || 'dateAdded';
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+    const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
+    const sort = (req.query.sort as string) || 'dateAdded';
     const order = req.query.order && req.query.order === 'asc' ? 1 : -1;
-    const find = JSON.parse(req.query.find || '[]');
+    const find = JSON.parse((req.query.find as string) || '[]');
     const db = await Database.getInstance(req);
     const docs = await db
       .collection(TRANSFERS_COLLECTION)
@@ -135,7 +135,7 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
     }
     const db = await Database.getInstance(req);
 
-    const find = {
+    const find: any = {
       $or: [],
     };
 
@@ -197,8 +197,8 @@ router.get('/userActivity/:id', telegramHashIsValid, async (req, res) => {
     if (!user?.id) {
       return res.status(401).send({ msg: 'Invalid user' });
     }
-    const limit = req.query.limit ? parseInt(req.query.limit) : 25;
-    const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+    const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     const find = {
       $or: [
         {
@@ -277,9 +277,9 @@ router.get('/rewards/received', telegramHashIsValid, async (req, res) => {
     if (!user?.id) {
       return res.status(401).send({ msg: 'Invalid user' });
     }
-    const limit = req.query.limit ? parseInt(req.query.limit) : 25;
-    const skip = req.query.skip ? parseInt(req.query.skip) : 0;
-    const find = JSON.parse(req.query.find || '[]');
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+    const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
+    const find = JSON.parse((req.query.find as string) || '[]');
     const db = await Database.getInstance(req);
     const docs = await db
       .collection(REWARDS_COLLECTION)
@@ -355,8 +355,8 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
     if (!user?.id) {
       return res.status(401).send({ msg: 'Invalid user' });
     }
-    const limit = req.query.limit ? parseInt(req.query.limit) : 25;
-    const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+    const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     //    const find = JSON.parse(req.query.find || '[]');
     const db = await Database.getInstance(req);
 

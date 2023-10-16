@@ -1,6 +1,6 @@
 import { webcrypto } from 'crypto';
 
-const telegramHashIsValid = async (req, res, next) => {
+const telegramHashIsValid = async (req: any, res: any, next: any) => {
   if (!process.env.BOT_TOKEN) {
     return res.status(500).json({ error: 'Internal server error' });
   }
