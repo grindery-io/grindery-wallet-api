@@ -8,7 +8,8 @@
     "prepare": "npm run gcp-build",
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "gcp-build": "tsc"
   },
   "author": "",
   "license": "ISC",
