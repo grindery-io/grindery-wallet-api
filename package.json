@@ -5,6 +5,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "prepare": "npm run gcp-build",
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc"
