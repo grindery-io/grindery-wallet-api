@@ -702,40 +702,8 @@ router.get('/leaderboard', async (req, res) => {
         },
         {
           $addFields: {
-            firstTx: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: '$transactions',
-                    as: 'transaction',
-                    cond: {
-                      $eq: [
-                        '$$transaction.dateAdded',
-                        { $min: '$transactions.dateAdded' },
-                      ],
-                    },
-                  },
-                },
-                0,
-              ],
-            },
-            lastTx: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: '$transactions',
-                    as: 'transaction',
-                    cond: {
-                      $eq: [
-                        '$$transaction.dateAdded',
-                        { $max: '$transactions.dateAdded' },
-                      ],
-                    },
-                  },
-                },
-                0,
-              ],
-            },
+            firstTx: '',
+            lastTx: '',
             txCount: { $size: '$transactions' },
             rewardsCount: { $size: '$rewards' },
             referralsCount: {

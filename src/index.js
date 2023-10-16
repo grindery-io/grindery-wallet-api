@@ -12,6 +12,24 @@ const { json, urlencoded } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const servers = [
+  {
+    url: 'https://wallet-api.grindery.io',
+    description: 'Production server',
+  },
+  {
+    url: 'https://wallet-api-staging.grindery.io',
+    description: 'Staging server',
+  },
+];
+
+if (process.env.NODE_ENV === 'development') {
+  servers.push({
+    url: 'http://localhost:3000',
+    description: 'Local server',
+  });
+}
+
 const options = {
   info: {
     version: appPackage.version || '0.0.1',
@@ -28,16 +46,7 @@ const options = {
       bearerFormat: 'JWT',
     },
   },
-  servers: [
-    {
-      url: 'https://wallet-api.grindery.io',
-      description: 'Production server',
-    },
-    {
-      url: 'https://wallet-api-staging.grindery.io',
-      description: 'Staging server',
-    },
-  ],
+  servers,
   // Base directory which we use to locate your JSDOC files
   baseDir: __dirname,
   // Glob pattern to find your jsdoc files (multiple patterns can be added in an array)
