@@ -1,16 +1,12 @@
 import express from 'express';
 import pkg from 'body-parser';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import './loadEnvironment.js';
-import appPackage from '../package.json' assert { type: 'json' };
 import v1 from './v1.js';
 import v2 from './v2.js';
+const appPackage = require('../package.json');
 
 const { json, urlencoded } = pkg;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const servers = [
   {
@@ -87,7 +83,7 @@ app.use(function (req, res, next) {
     'Access-Control-Allow-Headers',
     'X-CSRFToken, Origin, X-Requested-With, Content-Type, Accept, Authorization'
   );
-  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Credentials', 'true');
   res.header(
     'Access-Control-Allow-Methods',
     'HEAD,OPTIONS,GET,POST,PUT,PATCH,DELETE'
@@ -102,7 +98,7 @@ app.use(function (req, res, next) {
 });
 
 // JSON Parser
-const bodyParserAddRawBody = (req, res, buf, encoding) => {
+const bodyParserAddRawBody = (req: any, res: any, buf: any, encoding: any) => {
   req.rawBody = buf.toString();
 };
 app.use(
