@@ -149,28 +149,6 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v1/status
- *
- * @summary Check Telegram Connection Status
- * @description Check if the Telegram client is currently connected.
- * @tags Authentication
- * @security BearerAuth
- * @param {string} request.query.session - The session string to identify the client.
- * @return {object} 200 - Success response with connection status
- * @example response - 200 - Success response example
- * {
- *   "status": true // or false
- * }
- */
-router.get('/status', telegramHashIsValid, async (req, res) => {
-  const client = TGClient(new StringSession(decrypt(req.query.session)));
-  await client.connect();
-  const status = client.connected;
-
-  res.status(200).json({ status: status });
-});
-
-/**
  * GET /v1/contacts
  *
  * @summary Get Telegram Contacts
