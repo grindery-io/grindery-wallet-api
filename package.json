@@ -5,11 +5,9 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "prepare": "npm run gcp-build",
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc",
-    "gcp-build": "tsc"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +23,7 @@
     "mongodb": "^5.7.0",
     "mongodb-memory-server": "^8.15.1",
     "telegram": "^2.18.26",
+    "typescript": "^5.2.2",
     "uuidv4": "^6.2.13",
     "web3": "^1.7.4"
   },
@@ -34,8 +33,7 @@
     "@typescript-eslint/parser": "^6.7.5",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.2.2"
+    "ts-node-dev": "^2.0.0"
   },
   "engines": {
     "node": ">=16"
