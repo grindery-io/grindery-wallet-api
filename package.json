@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",
-    "build": "npx tsc"
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
