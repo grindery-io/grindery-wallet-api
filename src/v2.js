@@ -162,6 +162,7 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
  * @description Gets bot user activity (transactions) from DB collection.
  * @tags Activity
  * @security BearerAuth
+ * @param {string} id.params - User id
  * @param {number} limit.query - Limit number of results
  * @param {number} skip.query - Skip number of results
  * @return {object} 200 - Success response with connection status
