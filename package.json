@@ -12,8 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/pubsub": "^4.0.5",
-    "@google-cloud/storage": "^7.2.0",
     "airtable": "^0.12.2",
     "axios": "^1.4.0",
     "bignumber.js": "^9.1.1",
