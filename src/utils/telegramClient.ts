@@ -8,7 +8,7 @@ const TGClient = (session: string | Session) => {
     Number(process.env.TELEGRAM_API_ID),
     process.env.TELEGRAM_API_HASH || '',
     {
-      connectionRetries: 5,
+      connectionRetries: 3,
       maxConcurrentDownloads: 1,
     }
   );

@@ -188,7 +188,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       })
     );
 
-    await client.disconnect();
+    await client.destroy();
 
     const usersArray = await db
       .collection(USERS_COLLECTION)
@@ -509,7 +509,7 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
       String.fromCharCode(...new Uint8Array(photo as ArrayBufferLike))
     );
 
-    await client.disconnect();
+    await client.destroy();
 
     return res.status(200).json({
       photo: base64Photo ? `data:image/png;base64,${base64Photo}` : '',
