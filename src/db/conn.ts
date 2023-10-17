@@ -16,8 +16,8 @@ export class Database {
         let conn: any;
         try {
           conn = await client.connect();
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          console.error('Error connecting to DB:', JSON.stringify(error));
         }
 
         Database.instance = conn.db('grindery-bot');

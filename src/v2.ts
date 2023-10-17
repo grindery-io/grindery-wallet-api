@@ -93,7 +93,7 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error getting activity', error);
+    console.error('Error getting activity', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -150,7 +150,7 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
       .status(200)
       .send(await db.collection(TRANSFERS_COLLECTION).findOne(find));
   } catch (error) {
-    console.error('Error getting activity by id', error);
+    console.error('Error getting activity by id', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -233,7 +233,7 @@ router.get('/userActivity/:id', telegramHashIsValid, async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error getting activity', error);
+    console.error('Error getting activity', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -311,7 +311,7 @@ router.get('/rewards/received', telegramHashIsValid, async (req, res) => {
       total,
     });
   } catch (error) {
-    console.error('Error getting rewards', error);
+    console.error('Error getting rewards', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -431,7 +431,7 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
       total: total?.[0]?.Total || 0,
     });
   } catch (error) {
-    console.error('Error getting rewards', error);
+    console.error('Error getting rewards', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });

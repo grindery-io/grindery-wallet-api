@@ -290,7 +290,7 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
 
     return res.status(200).send(userDoc);
   } catch (error) {
-    console.error('Error getting user', error);
+    console.error('Error getting user', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -342,7 +342,7 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
         .toArray()
     );
   } catch (error) {
-    console.error('Error getting activity', error);
+    console.error('Error getting activity', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -383,7 +383,7 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
           .findOne({ userTelegramID: req.query.id })
       );
   } catch (error) {
-    console.error('Error getting user', error);
+    console.error('Error getting user', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -467,7 +467,7 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       received,
     });
   } catch (error) {
-    console.error('Error getting rewards', error);
+    console.error('Error getting rewards', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -526,7 +526,7 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
       photo: base64Photo ? `data:image/png;base64,${base64Photo}` : '',
     });
   } catch (error) {
-    console.error('Error getting user photo', error);
+    console.error('Error getting user photo', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -616,7 +616,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
 
     return res.status(200).json({ success: eventRes.data?.success || false });
   } catch (error) {
-    console.error('Error sending transaction', error);
+    console.error('Error sending transaction', JSON.stringify(error));
     return res.status(500).send({ success: false, error: 'An error occurred' });
   }
 });
@@ -771,7 +771,7 @@ router.get('/leaderboard', async (req, res) => {
       total: leaderboardDataLength,
     });
   } catch (error) {
-    console.error('Error getting leaderboard data', error);
+    console.error('Error getting leaderboard data', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -802,10 +802,10 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
         });
         fetchNextPage();
       },
-      function done(err) {
-        if (err) {
-          console.error(err);
-          return res.status(500).send({ msg: 'An error occurred', err });
+      function done(error) {
+        if (error) {
+          console.error('Error getting config: ', JSON.stringify(error));
+          return res.status(500).send({ msg: 'An error occurred', error });
         }
         return res.status(200).json({ config: configRecords });
       }
@@ -860,7 +860,7 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
       referrals,
     });
   } catch (error) {
-    console.error('Error getting user', error);
+    console.error('Error getting user', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -897,7 +897,7 @@ router.post('/balance', async (req, res) => {
         .toString(),
     });
   } catch (error: any) {
-    console.error('Error:', error);
+    console.error('Error:', JSON.stringify(error));
     res.status(500).json({ error: error?.message || '' });
   }
 });
