@@ -5,7 +5,7 @@ import createTelegramPromise from './utils/createTelegramPromise';
 import { uuid } from 'uuidv4';
 import TGClient from './utils/telegramClient';
 import { Database } from './db/conn';
-import { getUser } from './utils/telegram';
+import { deleteUserTelegramSession, getUser } from './utils/telegram';
 import axios from 'axios';
 import { decrypt, encrypt } from './utils/crypt';
 import Web3 from 'web3';
@@ -93,6 +93,11 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       console.error('Init tg auth error catched:', JSON.stringify(error));
       operations[operationId].status = 'error';
       operations[operationId].error = error;
+    })
+    .finally(() => {
+      setTimeout(() => {
+        client.destroy();
+      }, 500);
     });
 
   res.json({
@@ -173,11 +178,11 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/contacts', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
@@ -232,8 +237,26 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
           : false,
       }))
     );
-  } catch (error) {
-    console.error('Error getting user contacts: ', JSON.stringify(error));
+  } catch (error: any) {
+    console.error(
+      'Error getting user contacts: ',
+      typeof error === 'object'
+        ? JSON.stringify({ ...error, telegramUserId: user?.id || '' })
+        : JSON.stringify(error)
+    );
+    if (
+      error?.code === 401 &&
+      error?.errorMessage === 'AUTH_KEY_UNREGISTERED'
+    ) {
+      try {
+        await deleteUserTelegramSession(user?.id?.toString() || '', req);
+      } catch (deleteSessionError) {
+        console.error(
+          'deleteUserTelegramSession error: ',
+          JSON.stringify(error)
+        );
+      }
+    }
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
