@@ -70,7 +70,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         throw new Error('Phone code promise not found.');
       },
       onError: (error) => {
-        console.error('Init tg auth error:', error);
+        console.error('Init tg auth error:', JSON.stringify(error));
         operations[operationId].status = 'error';
         operations[operationId].error = error;
       },
@@ -79,7 +79,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       operations[operationId].status = 'completed';
     })
     .catch((error) => {
-      console.error('Init tg auth error catched:', error);
+      console.error('Init tg auth error catched:', JSON.stringify(error));
       operations[operationId].status = 'error';
       operations[operationId].error = error;
     });
