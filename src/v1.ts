@@ -222,7 +222,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       }))
     );
   } catch (error) {
-    console.error('Error getting user', error);
+    console.error('Error getting user contacts: ', JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
