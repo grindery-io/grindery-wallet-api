@@ -44,6 +44,10 @@ const operations: any = {};
  * }
  */
 router.post('/init', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
   const operationId = uuid();
 
   const client = TGClient(new StringSession(''));
@@ -70,7 +74,14 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         throw new Error('Phone code promise not found.');
       },
       onError: (error) => {
-        console.error('Init tg auth error:', JSON.stringify(error));
+        console.error(
+          'Init tg auth error:',
+          JSON.stringify({
+            ...error,
+            body: req.body,
+            userTelegramID: user?.id || '',
+          })
+        );
         operations[operationId].status = 'error';
         operations[operationId].error = error;
       },
