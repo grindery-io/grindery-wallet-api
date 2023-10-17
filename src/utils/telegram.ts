@@ -18,8 +18,6 @@ export const deleteUserTelegramSession = async (
   telegramUserId: string,
   req: any
 ): Promise<void> => {
-  console.log('deleteUserTelegramSession fired');
-
   try {
     const db = await Database.getInstance(req);
     await db.collection(USERS_COLLECTION).updateOne(
@@ -35,9 +33,7 @@ export const deleteUserTelegramSession = async (
         },
       }
     );
-    console.log('deleteUserTelegramSession success');
   } catch (error: any) {
-    console.log('deleteUserTelegramSession error');
     throw new Error(error);
   }
 };
