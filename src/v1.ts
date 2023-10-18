@@ -666,14 +666,11 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     sendTransactionFloodControl[user?.id] &&
     sendTransactionFloodControl[user?.id] > new Date().getTime()
   ) {
+    const newTimeout = new Date().getTime() + 10000;
+    sendTransactionFloodControl[user?.id] = newTimeout;
     console.log(
-      `User [${
-        user?.id
-      }] too many requests, tokens sending blocked until ${new Date(
-        sendTransactionFloodControl[user?.id]
-      )}`
+      `User [${user?.id}] too many requests, tokens sending blocked until ${newTimeout}`
     );
-    sendTransactionFloodControl[user?.id] = new Date().getTime() + 10000;
     return res.status(429).send({ msg: 'Too many requests' });
   }
 
