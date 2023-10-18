@@ -51,6 +51,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
   }
   console.log(`User [${user?.id}] requested a new telegram session`);
 
+  // Check flood control
   if (floodControl[user?.id] && floodControl[user?.id] > new Date().getTime()) {
     console.log(
       `User [${user?.id}] too many requests, auth blocked until ${new Date(
@@ -92,22 +93,25 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         );
         operations[operationId].status = 'error';
         operations[operationId].error = error;
+
+        // Set flood control on error
         if (
           error?.code === 420 &&
           error?.errorMessage === 'FLOOD' &&
           error?.seconds
         ) {
           floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
-        } else {
-          if (floodControl[user?.id]) {
-            delete floodControl[user?.id];
-          }
         }
       },
     })
     .then(() => {
       console.log(`User [${user?.id}] session created`);
       operations[operationId].status = 'completed';
+
+      // Clear flood control on success
+      if (floodControl[user?.id]) {
+        delete floodControl[user?.id];
+      }
     })
     .catch((error) => {
       console.error(
