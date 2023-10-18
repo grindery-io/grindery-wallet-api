@@ -52,6 +52,11 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
   console.log(`User [${user?.id}] requested a new telegram session`);
 
   if (floodControl[user?.id] && floodControl[user?.id] > new Date().getTime()) {
+    console.log(
+      `User [${user?.id}] too many requests, auth blocked until ${new Date(
+        floodControl[user?.id]
+      )}`
+    );
     return res.status(429).send({ msg: 'Too many requests' });
   }
 
