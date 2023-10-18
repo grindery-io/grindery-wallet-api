@@ -23,6 +23,7 @@ const ERC20 = require('./abi/ERC20.json');
 const router = express.Router();
 const operations: any = {};
 const floodControl: any = {};
+const sendTransactionFloodControl: any = {};
 
 /**
  * POST /v1/init
@@ -659,6 +660,22 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     return res.status(400).json({ error: 'Amount is required' });
   }
   console.log(`User [${user?.id}] requested to send a transaction`);
+
+  // Check flood control
+  if (
+    sendTransactionFloodControl[user?.id] &&
+    sendTransactionFloodControl[user?.id] > new Date().getTime()
+  ) {
+    console.log(
+      `User [${
+        user?.id
+      }] too many requests, tokens sending blocked until ${new Date(
+        sendTransactionFloodControl[user?.id]
+      )}`
+    );
+    return res.status(429).send({ msg: 'Too many requests' });
+  }
+
   try {
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
@@ -703,6 +720,9 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
       }
     );
     console.log(`User [${user?.id}] transaction request completed`);
+
+    // Set flood control
+    sendTransactionFloodControl[user?.id] = new Date().getTime() + 10000;
     return res.status(200).json({ success: eventRes.data?.success || false });
   } catch (error) {
     console.error(
