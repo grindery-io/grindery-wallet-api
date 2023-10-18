@@ -76,6 +76,10 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       },
       onError: (error) => {
         console.error(
+          `User [${user?.id}] new telegram session request error`,
+          JSON.stringify(error)
+        );
+        console.error(
           'Init tg auth error:',
           JSON.stringify({
             ...error,
