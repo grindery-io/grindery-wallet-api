@@ -41,6 +41,20 @@ yarn install
 - Run the following command
 
 ```
+yarn dev
+```
+
+#### Build
+
+- Run the following command
+
+```
+yarn build
+```
+
+To run created build run the following command:
+
+```
 yarn start
 ```
 
