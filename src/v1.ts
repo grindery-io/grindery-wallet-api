@@ -85,21 +85,24 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         }
         throw new Error('Phone code promise not found.');
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error(
           `User [${user?.id}] new telegram session request error`,
           JSON.stringify(error)
         );
-        console.error(
-          'Init tg auth error:',
-          JSON.stringify({
-            ...error,
-            body: req.body,
-            userTelegramID: user?.id || '',
-          })
-        );
         operations[operationId].status = 'error';
         operations[operationId].error = error;
+        if (
+          error?.code === 420 &&
+          error?.errorMessage === 'FLOOD' &&
+          error?.seconds
+        ) {
+          floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
+        } else {
+          if (floodControl[user?.id]) {
+            delete floodControl[user?.id];
+          }
+        }
       },
     })
     .then(() => {
@@ -113,13 +116,6 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       );
       operations[operationId].status = 'error';
       operations[operationId].error = error;
-      if (
-        error?.code === 420 &&
-        error?.errorMessage === 'FLOOD' &&
-        error?.seconds
-      ) {
-        floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
-      }
     })
     .finally(() => {
       setTimeout(() => {
