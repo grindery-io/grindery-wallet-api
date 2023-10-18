@@ -48,6 +48,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
   if (!user?.id) {
     return res.status(401).send({ msg: 'Invalid user' });
   }
+  console.log(`User [${user?.id}] requested a new telegram session`);
   const operationId = uuid();
 
   const client = TGClient(new StringSession(''));
@@ -87,10 +88,14 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       },
     })
     .then(() => {
+      console.log(`User [${user?.id}] session created`);
       operations[operationId].status = 'completed';
     })
     .catch((error) => {
-      console.error('Init tg auth error catched:', JSON.stringify(error));
+      console.error(
+        `User [${user?.id}] telegram session creation error`,
+        JSON.stringify(error)
+      );
       operations[operationId].status = 'error';
       operations[operationId].error = error;
     })
@@ -100,6 +105,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       }, 500);
     });
 
+  console.log(`User [${user?.id}] telegram session creation request completed`);
   res.json({
     operationId: operationId,
     status: 'pending',
@@ -134,16 +140,16 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
 router.post('/callback', telegramHashIsValid, async (req, res) => {
   const operationId = req.body.operationId;
   const code = req.body.code;
-
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] sent a confirmation code`);
   if (operations[operationId]) {
     operations[operationId].phoneCodePromise.resolve(code);
     const session = operations[operationId].client.session.save();
-    try {
-      const user = getUser(req);
-      if (!user?.id) {
-        return res.status(401).send({ msg: 'Invalid user' });
-      }
 
+    try {
       const db = await Database.getInstance(req);
       await db.collection(USERS_COLLECTION).updateOne(
         { userTelegramID: user.id.toString() },
@@ -154,12 +160,14 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
           },
         }
       );
+      console.log(`User [${user?.id}] telegram session saved`);
       res.json({
         session: encodeURIComponent(encrypt(session)),
         status: 'code_received',
       });
     } catch (error) {}
   } else {
+    console.log(`User [${user?.id}] telegram session operation not found`);
     res.status(404).json({ error: 'Operation not found' });
   }
 });
@@ -182,6 +190,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
   if (!user?.id) {
     return res.status(401).send({ msg: 'Invalid user' });
   }
+  console.log(`User [${user?.id}] requested their contacts`);
   try {
     const db = await Database.getInstance(req);
     const userDoc = await db
@@ -221,6 +230,9 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
       .find({ senderTgId: user.id.toString() })
       .toArray();
 
+    // @ts-ignore
+    console.log(`User [${user?.id}] contacts request completed`);
+
     res.status(200).json(
       // @ts-ignore
       contacts.users.map((user) => ({
@@ -239,22 +251,19 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
     );
   } catch (error: any) {
     console.error(
-      'Error getting user contacts: ',
-      typeof error === 'object'
-        ? JSON.stringify({ ...error, telegramUserId: user?.id || '' })
-        : JSON.stringify(error)
+      `Error getting user ${user?.id} contacts`,
+      JSON.stringify(error)
     );
     if (
       error?.code === 401 &&
       error?.errorMessage === 'AUTH_KEY_UNREGISTERED'
     ) {
       try {
+        console.log(`Deleting user ${user?.id} session`);
         await deleteUserTelegramSession(user?.id?.toString() || '', req);
+        console.log(`User [${user?.id}] session deleted`);
       } catch (deleteSessionError) {
-        console.error(
-          'deleteUserTelegramSession error: ',
-          JSON.stringify(error)
-        );
+        console.error(`Error deleting user ${user?.id} session`);
       }
     }
     return res.status(500).send({ msg: 'An error occurred', error });
@@ -264,7 +273,7 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
 /**
  * GET /v1/me
  *
- * @summary Get telegram webapp user
+ * @summary Get webapp user own profile
  * @description Gets telegram webapp user record from DB collection.
  * @tags User
  * @security BearerAuth
@@ -277,15 +286,21 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
  *   "userHandle": "username",
  *   "responsePath": "123/456",
  *   "patchwallet": "0x123",
- *   "dateAdded": "2021-01-01T00:00:00.000Z"
+ *   "dateAdded": "2021-01-01T00:00:00.000Z",
+ *   "webAppOpened": 1,
+ *   "webAppOpenedFirstDate": "2021-01-01T00:00:00.000Z",
+ *   "webAppOpenedLastDate": "2021-01-01T00:00:00.000Z",
+ *   "telegramSessionSavedDate": "2021-01-01T00:00:00.000Z",
+ *   "telegramSession": "encrypted-session-string"
  * }
  */
 router.get('/me', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their profile`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
@@ -310,10 +325,13 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
     if (userDoc?.telegramSession) {
       userDoc.telegramSession = decrypt(userDoc.telegramSession);
     }
-
+    console.log(`User [${user?.id}] profile request completed`);
     return res.status(200).send(userDoc);
   } catch (error) {
-    console.error('Error getting user', JSON.stringify(error));
+    console.error(
+      `Error getting user ${user?.id} own profile`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -322,6 +340,7 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
  * GET /v1/activity
  *
  * @summary Get telegram user activity
+ * @deprecated
  * @description Gets telegram user activity (transactions) from DB collection.
  * @tags Activity
  * @security BearerAuth
@@ -346,26 +365,30 @@ router.get('/me', telegramHashIsValid, async (req, res) => {
  * ]
  */
 router.get('/activity', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their activity`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
-    return res.status(200).send(
-      await db
-        .collection(TRANSFERS_COLLECTION)
-        .find({
-          $or: [
-            { senderTgId: user.id.toString() },
-            { recipientTgId: user.id.toString() },
-          ],
-        })
-        .sort({ dateAdded: -1 })
-        .toArray()
-    );
+    const activity = await db
+      .collection(TRANSFERS_COLLECTION)
+      .find({
+        $or: [
+          { senderTgId: user.id.toString() },
+          { recipientTgId: user.id.toString() },
+        ],
+      })
+      .sort({ dateAdded: -1 })
+      .toArray();
+    console.log(`User [${user?.id}] activity request completed`);
+    return res.status(200).send(activity);
   } catch (error) {
-    console.error('Error getting activity', JSON.stringify(error));
+    console.error(
+      `Error getting user ${user?.id} activity`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -373,8 +396,8 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
 /**
  * GET /v1/user
  *
- * @summary Get bot user public profile
- * @description Gets bot user public profile from DB collection.
+ * @summary Get grindery bot user public profile
+ * @description Gets grindery bot user public profile from DB collection.
  * @tags User
  * @security BearerAuth
  * @param {string} request.query.id - The telegram id of the user.
@@ -385,28 +408,37 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
  *   "userTelegramID": "456",
  *   "userName": "User Name",
  *   "userHandle": "username",
- *   "patchwallet": "0x123"
+ *   "patchwallet": "0x123",
+ *   "dateAdded": "2021-01-01T00:00:00.000Z",
+ *   "webAppOpened": 1,
+ *   "webAppOpenedFirstDate": "2021-01-01T00:00:00.000Z",
+ *   "webAppOpenedLastDate": "2021-01-01T00:00:00.000Z",
+ *   "telegramSessionSavedDate": "2021-01-01T00:00:00.000Z"
  * }
  */
 router.get('/user', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  if (!req.query.id) {
+    return res.status(400).send({ msg: 'Invalid user ID' });
+  }
+  console.log(`User [${user?.id}] requested user ${req.query.id} profile`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
-    if (!req.query.id) {
-      return res.status(400).send({ msg: 'Invalid user ID' });
-    }
     const db = await Database.getInstance(req);
-    return res
-      .status(200)
-      .send(
-        await db
-          .collection(USERS_COLLECTION)
-          .findOne({ userTelegramID: req.query.id })
-      );
+    const profile = await db
+      .collection(USERS_COLLECTION)
+      .findOne({ userTelegramID: req.query.id });
+    console.log(
+      `User [${user?.id}] user ${req.query.id} profile request completed`
+    );
+    return res.status(200).send(profile);
   } catch (error) {
-    console.error('Error getting user', JSON.stringify(error));
+    console.error(
+      `Error getting user ${req.query.id} profile`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -415,6 +447,7 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
  * GET /v1/rewards
  *
  * @summary Get telegram user rewards
+ * @deprecated
  * @description Gets telegram user rewards (transactions) from DB collection.
  * @tags Rewards
  * @security BearerAuth
@@ -440,11 +473,12 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/rewards', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their rewards`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
     const sent = await db
       .collection(TRANSFERS_COLLECTION)
@@ -485,12 +519,16 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
       .sort({ dateAdded: -1 })
       .toArray();
 
+    console.log(`User [${user?.id}] rewards request completed`);
     return res.status(200).send({
       pending,
       received,
     });
   } catch (error) {
-    console.error('Error getting rewards', JSON.stringify(error));
+    console.error(
+      `Error getting user ${user?.id} rewards`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -499,6 +537,7 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
  * GET /v1/user/photo
  *
  * @summary Get telegram user public profile photo
+ * @deprecated
  * @description Gets telegram user public profile photo from Telegram API
  * @tags Contacts
  * @security BearerAuth
@@ -511,16 +550,17 @@ router.get('/rewards', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/user/photo', telegramHashIsValid, async (req, res) => {
-  try {
-    const username = req.query.username;
+  const username = req.query.username;
 
-    if (!username) {
-      return res.status(401).send({ msg: 'Username is required' });
-    }
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
+  if (!username) {
+    return res.status(401).send({ msg: 'Username is required' });
+  }
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested user ${username} photo`);
+  try {
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
@@ -544,12 +584,15 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
     );
 
     await client.destroy();
-
+    console.log(`User [${user?.id}] user ${username} photo request completed`);
     return res.status(200).json({
       photo: base64Photo ? `data:image/png;base64,${base64Photo}` : '',
     });
   } catch (error) {
-    console.error('Error getting user photo', JSON.stringify(error));
+    console.error(
+      `Error getting user ${username} photo`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -593,6 +636,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
   if (!req.body.amount) {
     return res.status(400).json({ error: 'Amount is required' });
   }
+  console.log(`User [${user?.id}] requested to send a transaction`);
   try {
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
@@ -636,10 +680,13 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
         },
       }
     );
-
+    console.log(`User [${user?.id}] transaction request completed`);
     return res.status(200).json({ success: eventRes.data?.success || false });
   } catch (error) {
-    console.error('Error sending transaction', JSON.stringify(error));
+    console.error(
+      `Error sending transaction for user ${user?.id}`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ success: false, error: 'An error occurred' });
   }
 });
@@ -812,6 +859,11 @@ router.get('/leaderboard', async (req, res) => {
  *
  */
 router.get('/config', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested config`);
   const configRecords: any[] = [];
   base('Config')
     .select({
@@ -827,9 +879,13 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
       },
       function done(error) {
         if (error) {
-          console.error('Error getting config: ', JSON.stringify(error));
+          console.error(
+            `Error getting user ${user?.id} config`,
+            JSON.stringify(error)
+          );
           return res.status(500).send({ msg: 'An error occurred', error });
         }
+        console.log(`User [${user?.id}] config request completed`);
         return res.status(200).json({ config: configRecords });
       }
     );
@@ -852,11 +908,12 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/stats', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their stats`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
 
     const sentTransactions = await db
@@ -875,7 +932,7 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
       userTelegramID: user.id.toString(),
       reason: '2x_reward',
     });
-
+    console.log(`User [${user?.id}] stats request completed`);
     return res.status(200).send({
       sentTransactions,
       receivedTransactions,
@@ -883,7 +940,10 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
       referrals,
     });
   } catch (error) {
-    console.error('Error getting user', JSON.stringify(error));
+    console.error(
+      `Error getting user ${user?.id} stats`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });

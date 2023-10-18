@@ -47,15 +47,16 @@ const router = express.Router();
  * }
  */
 router.get('/activity', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their activity`);
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+  const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
+  const sort = (req.query.sort as string) || 'dateAdded';
+  const order = req.query.order && req.query.order === 'asc' ? 1 : -1;
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
-    const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
-    const sort = (req.query.sort as string) || 'dateAdded';
-    const order = req.query.order && req.query.order === 'asc' ? 1 : -1;
     const find = JSON.parse((req.query.find as string) || '[]');
     const db = await Database.getInstance(req);
     const docs = await db
@@ -87,13 +88,16 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
         ...find,
       ],
     });
-
+    console.log(`User [${user?.id}] activity request completed`);
     return res.status(200).send({
       docs,
       total,
     });
   } catch (error) {
-    console.error('Error getting activity', JSON.stringify(error));
+    console.error(
+      `Error getting activity for user ${user?.id}`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -128,11 +132,12 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
   if (!req.params.id) {
     return res.status(400).send({ msg: 'Invalid id' });
   }
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested activity by id ${req.params.id}`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const db = await Database.getInstance(req);
 
     const find: any = {
@@ -145,12 +150,15 @@ router.get('/activity/:id', telegramHashIsValid, async (req, res) => {
     } else {
       find.$or.push({ _id: new ObjectId(req.params.id) });
     }
-
+    console.log(`User [${user?.id}] activity by id request completed`);
     return res
       .status(200)
       .send(await db.collection(TRANSFERS_COLLECTION).findOne(find));
   } catch (error) {
-    console.error('Error getting activity by id', JSON.stringify(error));
+    console.error(
+      `Error getting activity by id for user [${user?.id}] `,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -192,11 +200,12 @@ router.get('/userActivity/:id', telegramHashIsValid, async (req, res) => {
   if (!req.params.id) {
     return res.status(400).send({ msg: 'Invalid id' });
   }
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested activity of user ${req.params.id}`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     const find = {
@@ -227,13 +236,18 @@ router.get('/userActivity/:id', telegramHashIsValid, async (req, res) => {
     const total = await db
       .collection(TRANSFERS_COLLECTION)
       .countDocuments(find);
-
+    console.log(
+      `User [${user?.id}] activity of user ${req.params.id} request completed`
+    );
     return res.status(200).send({
       docs,
       total,
     });
   } catch (error) {
-    console.error('Error getting activity', JSON.stringify(error));
+    console.error(
+      `Error getting activity of user ${req.params.id} for user [${user?.id}] `,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -272,11 +286,12 @@ router.get('/userActivity/:id', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/rewards/received', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their received rewards`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     const find = JSON.parse((req.query.find as string) || '[]');
@@ -305,13 +320,16 @@ router.get('/rewards/received', telegramHashIsValid, async (req, res) => {
         ...find,
       ],
     });
-
+    console.log(`User [${user?.id}] received rewards request completed`);
     return res.status(200).send({
       docs,
       total,
     });
   } catch (error) {
-    console.error('Error getting rewards', JSON.stringify(error));
+    console.error(
+      `Error getting received rewards for user ${user?.id}`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
@@ -350,11 +368,12 @@ router.get('/rewards/received', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
+  const user = getUser(req);
+  if (!user?.id) {
+    return res.status(401).send({ msg: 'Invalid user' });
+  }
+  console.log(`User [${user?.id}] requested their pending rewards`);
   try {
-    const user = getUser(req);
-    if (!user?.id) {
-      return res.status(401).send({ msg: 'Invalid user' });
-    }
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     //    const find = JSON.parse(req.query.find || '[]');
@@ -425,13 +444,16 @@ router.get('/rewards/pending', telegramHashIsValid, async (req, res) => {
       .collection(TRANSFERS_COLLECTION)
       .aggregate([...aggregate, { $count: 'Total' }])
       .toArray();
-
+    console.log(`User [${user?.id}] pending rewards request completed`);
     return res.status(200).send({
       docs,
       total: total?.[0]?.Total || 0,
     });
   } catch (error) {
-    console.error('Error getting rewards', JSON.stringify(error));
+    console.error(
+      `Error getting pending rewards for user ${user?.id}`,
+      JSON.stringify(error)
+    );
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
