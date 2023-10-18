@@ -22,6 +22,7 @@ import {
 const ERC20 = require('./abi/ERC20.json');
 const router = express.Router();
 const operations: any = {};
+const floodControl: any = {};
 
 /**
  * POST /v1/init
@@ -49,6 +50,11 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
     return res.status(401).send({ msg: 'Invalid user' });
   }
   console.log(`User [${user?.id}] requested a new telegram session`);
+
+  if (floodControl[user?.id] && floodControl[user?.id] > new Date().getTime()) {
+    return res.status(429).send({ msg: 'Too many requests' });
+  }
+
   const operationId = uuid();
 
   const client = TGClient(new StringSession(''));
@@ -102,6 +108,13 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       );
       operations[operationId].status = 'error';
       operations[operationId].error = error;
+      if (
+        error?.code === 420 &&
+        error?.errorMessage === 'FLOOD' &&
+        error?.seconds
+      ) {
+        floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
+      }
     })
     .finally(() => {
       setTimeout(() => {
