@@ -55,7 +55,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
 
   // Check flood control
   if (floodControl[user?.id] && floodControl[user?.id] > new Date().getTime()) {
-    console.log(
+    console.info(
       `User [${user?.id}] too many requests, auth blocked until ${new Date(
         floodControl[user?.id]
       )}`
@@ -668,7 +668,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
   ) {
     const newTimeout = new Date().getTime() + 10000;
     sendTransactionFloodControl[user?.id] = newTimeout;
-    console.log(
+    console.info(
       `User [${
         user?.id
       }] too many requests, tokens sending blocked until ${new Date(
