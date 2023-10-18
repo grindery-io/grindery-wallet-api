@@ -673,6 +673,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
         sendTransactionFloodControl[user?.id]
       )}`
     );
+    sendTransactionFloodControl[user?.id] = new Date().getTime() + 10000;
     return res.status(429).send({ msg: 'Too many requests' });
   }
 
