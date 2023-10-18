@@ -18,6 +18,7 @@ import {
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
 } from './utils/constants';
+import { send } from 'process';
 
 const ERC20 = require('./abi/ERC20.json');
 const router = express.Router();
@@ -669,7 +670,11 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
     const newTimeout = new Date().getTime() + 10000;
     sendTransactionFloodControl[user?.id] = newTimeout;
     console.log(
-      `User [${user?.id}] too many requests, tokens sending blocked until ${newTimeout}`
+      `User [${
+        user?.id
+      }] too many requests, tokens sending blocked until ${new Date(
+        sendTransactionFloodControl[user?.id]
+      )}`
     );
     return res.status(429).send({ msg: 'Too many requests' });
   }
