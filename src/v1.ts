@@ -204,9 +204,9 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
  * @tags Contacts
  * @security BearerAuth
  * @return {object} 200 - Success response with the list of contacts
- * @example response - 200 - Success response example (simplified for brevity)
+ * @example response - 200 - Success response example
  * {
- *   "contacts": [{...}, {...}] // array of contact objects
+ *   "contacts": []
  * }
  */
 router.get('/contacts', telegramHashIsValid, async (req, res) => {
@@ -486,7 +486,7 @@ router.get('/user', telegramHashIsValid, async (req, res) => {
  *      "walletAddress": "0x151bF7ccvvb2e6E32acC4362A8A5Bb26c5EAc38E",
  *      "reason": "user_sign_up",
  *      "userHandle": "username",
- *      "userName": "Firstname L`astname",
+ *      "userName": "Firstname Lastname",
  *      "amount":"100",
  *      "message":"Sign up reward",
  *      "transactionHash": "0x2d9c28626cc15b8aaassacd1c16a66886769a381b53be247f0518a55c0d5a334",
@@ -642,7 +642,6 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
  *   "success": true,
  *   "messageId": "some-uuid"
  * }
- *
  * @example response - 500 - Error response example
  * {
  *   "success": false,
@@ -752,23 +751,26 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
  * @example request - Sample Request
  * GET /v1/leaderboard?page=1&limit=10&sortBy=txCount&order=desc
  * @example response - 200 - Sample Success Response
- * [
- *   {
- *     "user": {
- *       "_id": "64f631feff2936fefd07ce3a",
- *       "userTelegramID": "5221262822",
- *       "userHandle": "divadonate",
- *       "userName": "Resa kikuk",
- *       "patchwallet": "0x3EcD632C733feBfEcc8c199fB69149e1696Bb9a2",
- *       "dateAdded": "2023-09-04T19:37:34.241Z"
- *     },
- *     "firstTx": {},
- *     "lastTx": {},
- *     "txCount": 5,
- *     "rewardsCount": 3,
- *     "referralsCount": 2
- *   }
- * ]
+ * {
+ *  "items": [
+ *    {
+ *      "user": {
+ *        "_id": "64f631feff2936fefd07ce3a",
+ *        "userTelegramID": "5221262822",
+ *        "userHandle": "divadonate",
+ *        "userName": "Resa kikuk",
+ *        "patchwallet": "0x3EcD632C733feBfEcc8c199fB69149e1696Bb9a2",
+ *        "dateAdded": "2023-09-04T19:37:34.241Z"
+ *      },
+ *      "firstTx": "",
+ *      "lastTx": "",
+ *      "txCount": 5,
+ *      "rewardsCount": 3,
+ *      "referralsCount": 2
+ *    }
+ *  ],
+ *  "total": 1
+ * }
  * @example response - 500 - Sample Error Response
  * {
  *   "msg": "An error occurred",
@@ -900,8 +902,6 @@ router.get('/leaderboard', async (req, res) => {
  * @security BearerAuth
  * @return {object} 200 - Success response with an array of raw airtable records
  * @return {object} 404 - Error response
- * @example response - 200 - Success response example
- *
  */
 router.get('/config', telegramHashIsValid, async (req, res) => {
   const user = getUser(req);
