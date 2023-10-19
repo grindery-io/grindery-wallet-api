@@ -48,7 +48,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     return res.status(401).send({ msg: 'Invalid user' });
   }
   console.log(`User [${user?.id}] requested their activity`);
-  const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 15;
   const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
   const sort = (req.query.sort as string) || 'dateAdded';
   const order = req.query.order && req.query.order === 'asc' ? 1 : -1;
@@ -99,13 +99,13 @@ router.get('/', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v2/activity/user/:id
+ * GET /v2/activity/user/{id}
  *
  * @summary Get bot user activity
  * @description Gets bot user activity (transactions) from DB collection.
  * @tags Activity
  * @security BearerAuth
- * @param {string} id.params - User id
+ * @param {string} id.path - User id
  * @param {number} limit.query - Limit number of results
  * @param {number} skip.query - Skip number of results
  * @return {object} 200 - Success response with connection status
@@ -141,7 +141,7 @@ router.get('/user/:id', telegramHashIsValid, async (req, res) => {
   }
   console.log(`User [${user?.id}] requested activity of user ${req.params.id}`);
   try {
-    const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 15;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
     const find = {
       $or: [
@@ -188,13 +188,13 @@ router.get('/user/:id', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * GET /v2/activity/:id
+ * GET /v2/activity/{id}
  *
  * @summary Get single activity
  * @description Gets single activity (transactions) from DB collection by id.
  * @tags Activity
  * @security BearerAuth
- * @param {string} id.params - Transaction hash, or doc id or internal transaction id
+ * @param {string} id.path - Transaction hash, or doc id or internal transaction id
  * @return {object} 200 - Success response with single transaction
  * @example response - 200 - Success response example
  * {

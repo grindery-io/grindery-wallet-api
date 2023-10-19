@@ -7,14 +7,14 @@ import { TRANSFERS_COLLECTION } from '../../utils/constants';
 const router = express.Router();
 
 /**
- * GET /v2/userActivity/:id
+ * GET /v2/userActivity/{id}
  *
  * @summary Get bot user activity
  * @deprecated
  * @description Gets bot user activity (transactions) from DB collection.
  * @tags UserActivity
  * @security BearerAuth
- * @param {string} id.params - User id
+ * @param {string} id.path - User id
  * @param {number} limit.query - Limit number of results
  * @param {number} skip.query - Skip number of results
  * @return {object} 200 - Success response with connection status
