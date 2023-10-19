@@ -18,7 +18,6 @@ import {
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
 } from './utils/constants';
-import { send } from 'process';
 
 const ERC20 = require('./abi/ERC20.json');
 const router = express.Router();
