@@ -1,25 +1,25 @@
 import express from 'express';
 import { Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
-import createTelegramPromise from './utils/createTelegramPromise';
+import createTelegramPromise from '../utils/createTelegramPromise';
 import { uuid } from 'uuidv4';
-import TGClient from './utils/telegramClient';
-import { Database } from './db/conn';
-import { deleteUserTelegramSession, getUser } from './utils/telegram';
+import TGClient from '../utils/telegramClient';
+import { Database } from '../db/conn';
+import { deleteUserTelegramSession, getUser } from '../utils/telegram';
 import axios from 'axios';
-import { decrypt, encrypt } from './utils/crypt';
+import { decrypt, encrypt } from '../utils/crypt';
 import Web3 from 'web3';
-import { CHAIN_MAPPING } from './utils/chains';
-import { base } from './utils/airtableClient';
+import { CHAIN_MAPPING } from '../utils/chains';
+import { base } from '../utils/airtableClient';
 import BigNumber from 'bignumber.js';
-import telegramHashIsValid from './utils/telegramHashIsValid';
+import telegramHashIsValid from '../utils/telegramHashIsValid';
 import {
   REWARDS_COLLECTION,
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
-} from './utils/constants';
+} from '../utils/constants';
 
-const ERC20 = require('./abi/ERC20.json');
+const ERC20 = require('../abi/ERC20.json');
 const router = express.Router();
 const operations: any = {};
 const floodControl: any = {};
@@ -29,6 +29,7 @@ const sendTransactionFloodControl: any = {};
  * POST /v1/init
  *
  * @summary Initialize a Telegram Session
+ * @deprecated
  * @description Start a session with Telegram using phone number and password, awaiting a phone code for full authentication.
  * @tags Authentication
  * @security BearerAuth
@@ -140,6 +141,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
  * POST /v1/callback
  *
  * @summary Set Phone Code for Authentication
+ * @deprecated
  * @description Provide the phone code received on the user's device to authenticate the session with Telegram.
  * @tags Authentication
  * @security BearerAuth
@@ -200,6 +202,7 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
  * GET /v1/contacts
  *
  * @summary Get Telegram Contacts
+ * @deprecated
  * @description Retrieve telegram user's contact list.
  * @tags Contacts
  * @security BearerAuth
@@ -298,8 +301,9 @@ router.get('/contacts', telegramHashIsValid, async (req, res) => {
  * GET /v1/me
  *
  * @summary Get webapp user own profile
+ * @deprecated
  * @description Gets telegram webapp user record from DB collection.
- * @tags User
+ * @tags Me
  * @security BearerAuth
  * @return {object} 200 - Success response with connection status
  * @example response - 200 - Success response example
@@ -421,6 +425,7 @@ router.get('/activity', telegramHashIsValid, async (req, res) => {
  * GET /v1/user
  *
  * @summary Get grindery bot user public profile
+ * @deprecated
  * @description Gets grindery bot user public profile from DB collection.
  * @tags User
  * @security BearerAuth
@@ -625,8 +630,9 @@ router.get('/user/photo', telegramHashIsValid, async (req, res) => {
  * POST /v1/send
  *
  * @summary Send transaction
+ * @deprecated
  * @description Send transaction to a contact from telegram webapp
- * @tags Tokens
+ * @tags Send
  * @security BearerAuth
  * @param {object} request.body - The request body containing the transaction details
  * @return {object} 200 - Success response with session and status
@@ -739,6 +745,7 @@ router.post('/send', telegramHashIsValid, async (req, res) => {
  * GET /v1/leaderboard
  *
  * @summary Get leaderboard list
+ * @deprecated
  * @description Fetches leaderboard data by aggregating user statistics based on transaction and reward records. Allows sorting, pagination, and filter features. Additionally, retrieves users' balances using Web3 integration.
  * @tags Leaderboard
  * @param {string} chainId.query - The chain ID for Web3 operations. Defaults to "eip155:137".
@@ -897,6 +904,7 @@ router.get('/leaderboard', async (req, res) => {
  * GET /v1/config
  *
  * @summary Get wallet config
+ * @deprecated
  * @description Gets wallet config and dynamic data from Airtable
  * @tags Config
  * @security BearerAuth
@@ -940,8 +948,9 @@ router.get('/config', telegramHashIsValid, async (req, res) => {
  * GET /v1/stats
  *
  * @summary Get telegram user stats
+ * @deprecated
  * @description Gets telegram user stats, such as amount of transactions, rewards, and referrals.
- * @tags User
+ * @tags Stats
  * @security BearerAuth
  * @return {object} 200 - Success response with stats object
  * @example response - 200 - Success response example
@@ -997,8 +1006,9 @@ router.get('/stats', telegramHashIsValid, async (req, res) => {
  * POST /v1/balance
  *
  * @summary Request user token balance
+ * @deprecated
  * @description Gets bot user tokens balance from chain
- * @tags User
+ * @tags Balance
  * @security BearerAuth
  * @return {object} 200 - Success response with balance
  * @example response - 200 - Success response example

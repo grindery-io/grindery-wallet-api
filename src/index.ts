@@ -2,8 +2,8 @@ import express from 'express';
 import pkg from 'body-parser';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
 import './loadEnvironment';
-import v1 from './v1';
-import v2 from './v2';
+import v1 from './routes/v1';
+import v2 from './routes/v2/index';
 const appPackage = require('../package.json');
 
 const { json, urlencoded } = pkg;
@@ -46,7 +46,7 @@ const options = {
   // Base directory which we use to locate your JSDOC files
   baseDir: __dirname,
   // Glob pattern to find your jsdoc files (multiple patterns can be added in an array)
-  filesPattern: './**/*.js',
+  filesPattern: './**/*.ts',
   // URL where SwaggerUI will be rendered
   swaggerUIPath: '/docs',
   // Expose OpenAPI UI
