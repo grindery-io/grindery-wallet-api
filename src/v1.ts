@@ -103,6 +103,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
         ) {
           floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
         }
+        client.destroy();
       },
     })
     .then(() => {
