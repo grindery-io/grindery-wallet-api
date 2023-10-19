@@ -18,15 +18,9 @@ yarn install
 
 ### Development
 
-- Create a `.env` file and add the following variables
+- Create a `.env` file and add the following variables:
 
 `ATLAS_URI`
-
-`GRINDERY_ACCOUNT_REFRESH_TOKEN`
-
-`GRINDERY_ACCOUNT_WORKSPACE_KEY`
-
-`WALLET_NOTIFICATION_WEBHOOK_URL`
 
 `TELEGRAM_API_ID`
 
@@ -37,6 +31,8 @@ yarn install
 `AIRTABLE_API_KEY`
 
 `AIRTABLE_BASE_ID`
+
+`API_KEY`
 
 - Run the following command
 
