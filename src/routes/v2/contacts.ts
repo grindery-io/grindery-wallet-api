@@ -54,7 +54,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       .find({
         userTelegramID: {
           // @ts-ignore
-          $in: contacts.users.map((user) => res.locals.userId),
+          $in: contacts.users.map((user) => user.id),
         },
       })
       .toArray();
@@ -72,12 +72,12 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       contacts.users.map((user) => ({
         ...user,
         isGrinderyUser: usersArray.find(
-          (u: any) => u.userTelegramID === res.locals.userId
+          (u: any) => u.userTelegramID === user.id
         )
           ? true
           : false,
         isInvited: transfers.find(
-          (transfer: any) => transfer.recipientTgId === res.locals.userId
+          (transfer: any) => transfer.recipientTgId === user.id
         )
           ? true
           : false,
