@@ -3,7 +3,7 @@ import { Api } from 'telegram';
 import { StringSession } from 'telegram/sessions/index.js';
 import TGClient from '../../utils/telegramClient';
 import { Database } from '../../db/conn';
-import { deleteUserTelegramSession, getUser } from '../../utils/telegram';
+import { deleteUserTelegramSession } from '../../utils/telegram';
 import { decrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { TRANSFERS_COLLECTION, USERS_COLLECTION } from '../../utils/constants';
@@ -24,16 +24,12 @@ const router = express.Router();
  * }
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested their contacts`);
+  console.log(`User [${res.locals.userId}] requested their contacts`);
   try {
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
-      .findOne({ userTelegramID: user.id.toString() });
+      .findOne({ userTelegramID: res.locals.userId });
     const session = userDoc.telegramSession;
     if (!session) {
       return res.status(200).json([]);
@@ -58,30 +54,30 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       .find({
         userTelegramID: {
           // @ts-ignore
-          $in: contacts.users.map((user) => user.id.toString()),
+          $in: contacts.users.map((user) => res.locals.userId),
         },
       })
       .toArray();
 
     const transfers = await db
       .collection(TRANSFERS_COLLECTION)
-      .find({ senderTgId: user.id.toString() })
+      .find({ senderTgId: res.locals.userId })
       .toArray();
 
     // @ts-ignore
-    console.log(`User [${user?.id}] contacts request completed`);
+    console.log(`User [${res.locals.userId}] contacts request completed`);
 
     res.status(200).json(
       // @ts-ignore
       contacts.users.map((user) => ({
         ...user,
         isGrinderyUser: usersArray.find(
-          (u: any) => u.userTelegramID === user.id.toString()
+          (u: any) => u.userTelegramID === res.locals.userId
         )
           ? true
           : false,
         isInvited: transfers.find(
-          (transfer: any) => transfer.recipientTgId === user.id.toString()
+          (transfer: any) => transfer.recipientTgId === res.locals.userId
         )
           ? true
           : false,
@@ -89,7 +85,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     );
   } catch (error: any) {
     console.error(
-      `Error getting user ${user?.id} contacts`,
+      `Error getting user ${res.locals.userId} contacts`,
       JSON.stringify(error)
     );
     if (
@@ -97,11 +93,11 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       error?.errorMessage === 'AUTH_KEY_UNREGISTERED'
     ) {
       try {
-        console.log(`Deleting user ${user?.id} session`);
-        await deleteUserTelegramSession(user?.id?.toString() || '', req);
-        console.log(`User [${user?.id}] session deleted`);
+        console.log(`Deleting user ${res.locals.userId} session`);
+        await deleteUserTelegramSession(res.locals.userId || '', req);
+        console.log(`User [${res.locals.userId}] session deleted`);
       } catch (deleteSessionError) {
-        console.error(`Error deleting user ${user?.id} session`);
+        console.error(`Error deleting user ${res.locals.userId} session`);
       }
     }
     return res.status(500).send({ msg: 'An error occurred', error });
@@ -130,16 +126,12 @@ router.get('/photo', telegramHashIsValid, async (req, res) => {
   if (!username) {
     return res.status(401).send({ msg: 'Username is required' });
   }
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested user ${username} photo`);
+  console.log(`User [${res.locals.userId}] requested user ${username} photo`);
   try {
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
-      .findOne({ userTelegramID: user.id.toString() });
+      .findOne({ userTelegramID: res.locals.userId });
     const session = userDoc.telegramSession;
     if (!session) {
       return res.status(200).json({ photo: '' });
@@ -159,7 +151,9 @@ router.get('/photo', telegramHashIsValid, async (req, res) => {
     );
 
     await client.destroy();
-    console.log(`User [${user?.id}] user ${username} photo request completed`);
+    console.log(
+      `User [${res.locals.userId}] user ${username} photo request completed`
+    );
     return res.status(200).json({
       photo: base64Photo ? `data:image/png;base64,${base64Photo}` : '',
     });

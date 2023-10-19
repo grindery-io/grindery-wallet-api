@@ -1,6 +1,5 @@
 import express from 'express';
 import { Database } from '../../db/conn';
-import { getUser } from '../../utils/telegram';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import {
   REWARDS_COLLECTION,
@@ -26,31 +25,27 @@ const router = express.Router();
  * }
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested their stats`);
+  console.log(`User [${res.locals.userId}] requested their stats`);
   try {
     const db = await Database.getInstance(req);
 
     const sentTransactions = await db
       .collection(TRANSFERS_COLLECTION)
-      .countDocuments({ senderTgId: user.id.toString() });
+      .countDocuments({ senderTgId: res.locals.userId });
 
     const receivedTransactions = await db
       .collection(TRANSFERS_COLLECTION)
-      .countDocuments({ recipientTgId: user.id.toString() });
+      .countDocuments({ recipientTgId: res.locals.userId });
 
     const rewards = await db
       .collection(REWARDS_COLLECTION)
-      .countDocuments({ userTelegramID: user.id.toString() });
+      .countDocuments({ userTelegramID: res.locals.userId });
 
     const referrals = await db.collection(REWARDS_COLLECTION).countDocuments({
-      userTelegramID: user.id.toString(),
+      userTelegramID: res.locals.userId,
       reason: '2x_reward',
     });
-    console.log(`User [${user?.id}] stats request completed`);
+    console.log(`User [${res.locals.userId}] stats request completed`);
     return res.status(200).send({
       sentTransactions,
       receivedTransactions,
@@ -59,7 +54,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     });
   } catch (error) {
     console.error(
-      `Error getting user ${user?.id} stats`,
+      `Error getting user ${res.locals.userId} stats`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });

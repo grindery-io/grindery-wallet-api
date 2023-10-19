@@ -1,5 +1,4 @@
 import express from 'express';
-import { getUser } from '../../utils/telegram';
 import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 
@@ -34,30 +33,26 @@ const sendTransactionFloodControl: any = {};
  * }
  */
 router.post('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user || !user.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
   if (!req.body.recipientTgId) {
     return res.status(400).json({ error: 'Recipient is required' });
   }
   if (!req.body.amount) {
     return res.status(400).json({ error: 'Amount is required' });
   }
-  console.log(`User [${user?.id}] requested to send a transaction`);
+  console.log(`User [${res.locals.userId}] requested to send a transaction`);
 
   // Check flood control
   if (
-    sendTransactionFloodControl[user?.id] &&
-    sendTransactionFloodControl[user?.id] > new Date().getTime()
+    sendTransactionFloodControl[res.locals.userId] &&
+    sendTransactionFloodControl[res.locals.userId] > new Date().getTime()
   ) {
     const newTimeout = new Date().getTime() + 10000;
-    sendTransactionFloodControl[user?.id] = newTimeout;
+    sendTransactionFloodControl[res.locals.userId] = newTimeout;
     console.info(
       `User [${
-        user?.id
+        res.locals.userId
       }] too many requests, tokens sending blocked until ${new Date(
-        sendTransactionFloodControl[user?.id]
+        sendTransactionFloodControl[res.locals.userId]
       )}`
     );
     return res.status(429).send({ msg: 'Too many requests' });
@@ -70,7 +65,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       const params: any = {
         recipientTgId: req.body.recipientTgId,
         amount: req.body.amount,
-        senderTgId: user.id.toString(),
+        senderTgId: res.locals.userId,
       };
       if (req.body.message) {
         params.message = req.body.message;
@@ -86,7 +81,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
           const params: any = {
             recipientTgId: id,
             amount: req.body.amount,
-            senderTgId: user.id.toString(),
+            senderTgId: res.locals.userId,
           };
           if (req.body.message) {
             params.message = req.body.message;
@@ -106,14 +101,15 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         },
       }
     );
-    console.log(`User [${user?.id}] transaction request completed`);
+    console.log(`User [${res.locals.userId}] transaction request completed`);
 
     // Set flood control
-    sendTransactionFloodControl[user?.id] = new Date().getTime() + 10000;
+    sendTransactionFloodControl[res.locals.userId] =
+      new Date().getTime() + 10000;
     return res.status(200).json({ success: eventRes.data?.success || false });
   } catch (error) {
     console.error(
-      `Error sending transaction for user ${user?.id}`,
+      `Error sending transaction for user ${res.locals.userId}`,
       JSON.stringify(error)
     );
     return res.status(500).send({ success: false, error: 'An error occurred' });

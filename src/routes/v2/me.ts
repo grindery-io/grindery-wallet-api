@@ -1,6 +1,5 @@
 import express from 'express';
 import { Database } from '../../db/conn';
-import { getUser } from '../../utils/telegram';
 import { decrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { USERS_COLLECTION } from '../../utils/constants';
@@ -32,16 +31,12 @@ const router = express.Router();
  * }
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested their profile`);
+  console.log(`User [${res.locals.userId}] requested their profile`);
   try {
     const db = await Database.getInstance(req);
     const userDoc = await db
       .collection(USERS_COLLECTION)
-      .findOne({ userTelegramID: user.id.toString() });
+      .findOne({ userTelegramID: res.locals.userId });
 
     const updateData: any = {
       $inc: { webAppOpened: 1 },
@@ -57,16 +52,16 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     }
     await db
       .collection(USERS_COLLECTION)
-      .updateOne({ userTelegramID: user.id.toString() }, updateData);
+      .updateOne({ userTelegramID: res.locals.userId }, updateData);
 
     if (userDoc?.telegramSession) {
       userDoc.telegramSession = decrypt(userDoc.telegramSession);
     }
-    console.log(`User [${user?.id}] profile request completed`);
+    console.log(`User [${res.locals.userId}] profile request completed`);
     return res.status(200).send(userDoc);
   } catch (error) {
     console.error(
-      `Error getting user ${user?.id} own profile`,
+      `Error getting user ${res.locals.userId} own profile`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });

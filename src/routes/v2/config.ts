@@ -1,5 +1,4 @@
 import express from 'express';
-import { getUser } from '../../utils/telegram';
 import { base } from '../../utils/airtableClient';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 
@@ -16,11 +15,7 @@ const router = express.Router();
  * @return {object} 404 - Error response
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested config`);
+  console.log(`User [${res.locals.userId}] requested config`);
   const configRecords: any[] = [];
   base('Config')
     .select({
@@ -37,12 +32,12 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       function done(error) {
         if (error) {
           console.error(
-            `Error getting user ${user?.id} config`,
+            `Error getting user ${res.locals.userId} config`,
             JSON.stringify(error)
           );
           return res.status(500).send({ msg: 'An error occurred', error });
         }
-        console.log(`User [${user?.id}] config request completed`);
+        console.log(`User [${res.locals.userId}] config request completed`);
         return res.status(200).json({ config: configRecords });
       }
     );

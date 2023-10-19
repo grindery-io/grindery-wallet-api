@@ -1,6 +1,5 @@
 import express from 'express';
 import { Database } from '../../db/conn';
-import { getUser } from '../../utils/telegram';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import {
   REWARDS_COLLECTION,
@@ -44,11 +43,7 @@ const router = express.Router();
  * }
  */
 router.get('/received', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested their received rewards`);
+  console.log(`User [${res.locals.userId}] requested their received rewards`);
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
@@ -59,7 +54,7 @@ router.get('/received', telegramHashIsValid, async (req, res) => {
       .find({
         $and: [
           {
-            userTelegramID: user.id.toString(),
+            userTelegramID: res.locals.userId,
           },
           ...find,
         ],
@@ -73,19 +68,21 @@ router.get('/received', telegramHashIsValid, async (req, res) => {
     const total = await db.collection(REWARDS_COLLECTION).countDocuments({
       $and: [
         {
-          userTelegramID: user.id.toString(),
+          userTelegramID: res.locals.userId,
         },
         ...find,
       ],
     });
-    console.log(`User [${user?.id}] received rewards request completed`);
+    console.log(
+      `User [${res.locals.userId}] received rewards request completed`
+    );
     return res.status(200).send({
       docs,
       total,
     });
   } catch (error) {
     console.error(
-      `Error getting received rewards for user ${user?.id}`,
+      `Error getting received rewards for user ${res.locals.userId}`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });
@@ -126,11 +123,7 @@ router.get('/received', telegramHashIsValid, async (req, res) => {
  * }
  */
 router.get('/pending', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested their pending rewards`);
+  console.log(`User [${res.locals.userId}] requested their pending rewards`);
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 25;
     const skip = req.query.skip ? parseInt(req.query.skip as string) : 0;
@@ -163,7 +156,7 @@ router.get('/pending', telegramHashIsValid, async (req, res) => {
         $match: {
           $and: [
             {
-              senderTgId: user.id.toString(),
+              senderTgId: res.locals.userId,
             },
             {
               transactionRecipientIsUser: false,
@@ -202,14 +195,16 @@ router.get('/pending', telegramHashIsValid, async (req, res) => {
       .collection(TRANSFERS_COLLECTION)
       .aggregate([...aggregate, { $count: 'Total' }])
       .toArray();
-    console.log(`User [${user?.id}] pending rewards request completed`);
+    console.log(
+      `User [${res.locals.userId}] pending rewards request completed`
+    );
     return res.status(200).send({
       docs,
       total: total?.[0]?.Total || 0,
     });
   } catch (error) {
     console.error(
-      `Error getting pending rewards for user ${user?.id}`,
+      `Error getting pending rewards for user ${res.locals.userId}`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });

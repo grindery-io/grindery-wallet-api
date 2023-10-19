@@ -1,6 +1,5 @@
 import express from 'express';
 import { Database } from '../../db/conn';
-import { getUser } from '../../utils/telegram';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { USERS_COLLECTION } from '../../utils/constants';
 
@@ -30,21 +29,19 @@ const router = express.Router();
  * }
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
   if (!req.query.id) {
     return res.status(400).send({ msg: 'Invalid user ID' });
   }
-  console.log(`User [${user?.id}] requested user ${req.query.id} profile`);
+  console.log(
+    `User [${res.locals.userId}] requested user ${req.query.id} profile`
+  );
   try {
     const db = await Database.getInstance(req);
     const profile = await db
       .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: req.query.id });
     console.log(
-      `User [${user?.id}] user ${req.query.id} profile request completed`
+      `User [${res.locals.userId}] user ${req.query.id} profile request completed`
     );
     return res.status(200).send(profile);
   } catch (error) {

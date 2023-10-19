@@ -42,6 +42,10 @@ const telegramHashIsValid = async (req: any, res: any, next: any) => {
   if (!isValid) {
     return res.status(403).json({ error: 'User is not authenticated' });
   }
+
+  const user = JSON.parse(data.user || '{}');
+  const userId = user?.id?.toString() || '';
+  res.locals.userId = userId;
   next();
 };
 

@@ -4,7 +4,6 @@ import createTelegramPromise from '../../utils/createTelegramPromise';
 import { uuid } from 'uuidv4';
 import TGClient from '../../utils/telegramClient';
 import { Database } from '../../db/conn';
-import { getUser } from '../../utils/telegram';
 import { encrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { USERS_COLLECTION } from '../../utils/constants';
@@ -34,17 +33,18 @@ const floodControl: any = {};
  * }
  */
 router.post('/init', telegramHashIsValid, async (req, res) => {
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] requested a new telegram session`);
+  console.log(`User [${res.locals.userId}] requested a new telegram session`);
 
   // Check flood control
-  if (floodControl[user?.id] && floodControl[user?.id] > new Date().getTime()) {
+  if (
+    floodControl[res.locals.userId] &&
+    floodControl[res.locals.userId] > new Date().getTime()
+  ) {
     console.info(
-      `User [${user?.id}] too many requests, auth blocked until ${new Date(
-        floodControl[user?.id]
+      `User [${
+        res.locals.userId
+      }] too many requests, auth blocked until ${new Date(
+        floodControl[res.locals.userId]
       )}`
     );
     return res.status(429).send({ msg: 'Too many requests' });
@@ -77,7 +77,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       },
       onError: (error: any) => {
         console.error(
-          `User [${user?.id}] new telegram session request error`,
+          `User [${res.locals.userId}] new telegram session request error`,
           JSON.stringify(error)
         );
         operations[operationId].status = 'error';
@@ -89,23 +89,24 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
           error?.errorMessage === 'FLOOD' &&
           error?.seconds
         ) {
-          floodControl[user?.id] = new Date().getTime() + error?.seconds * 1000;
+          floodControl[res.locals.userId] =
+            new Date().getTime() + error?.seconds * 1000;
         }
         client.destroy();
       },
     })
     .then(() => {
-      console.log(`User [${user?.id}] session created`);
+      console.log(`User [${res.locals.userId}] session created`);
       operations[operationId].status = 'completed';
 
       // Clear flood control on success
-      if (floodControl[user?.id]) {
-        delete floodControl[user?.id];
+      if (floodControl[res.locals.userId]) {
+        delete floodControl[res.locals.userId];
       }
     })
     .catch((error) => {
       console.error(
-        `User [${user?.id}] telegram session creation error`,
+        `User [${res.locals.userId}] telegram session creation error`,
         JSON.stringify(error)
       );
       operations[operationId].status = 'error';
@@ -117,7 +118,9 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
       }, 500);
     });
 
-  console.log(`User [${user?.id}] telegram session creation request completed`);
+  console.log(
+    `User [${res.locals.userId}] telegram session creation request completed`
+  );
   res.json({
     operationId: operationId,
     status: 'pending',
@@ -152,11 +155,7 @@ router.post('/init', telegramHashIsValid, async (req, res) => {
 router.post('/callback', telegramHashIsValid, async (req, res) => {
   const operationId = req.body.operationId;
   const code = req.body.code;
-  const user = getUser(req);
-  if (!user?.id) {
-    return res.status(401).send({ msg: 'Invalid user' });
-  }
-  console.log(`User [${user?.id}] sent a confirmation code`);
+  console.log(`User [${res.locals.userId}] sent a confirmation code`);
   if (operations[operationId]) {
     operations[operationId].phoneCodePromise.resolve(code);
     const session = operations[operationId].client.session.save();
@@ -164,7 +163,7 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
     try {
       const db = await Database.getInstance(req);
       await db.collection(USERS_COLLECTION).updateOne(
-        { userTelegramID: user.id.toString() },
+        { userTelegramID: res.locals.userId },
         {
           $set: {
             telegramSession: encrypt(session),
@@ -172,14 +171,16 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
           },
         }
       );
-      console.log(`User [${user?.id}] telegram session saved`);
+      console.log(`User [${res.locals.userId}] telegram session saved`);
       res.json({
         session: encodeURIComponent(encrypt(session)),
         status: 'code_received',
       });
     } catch (error) {}
   } else {
-    console.log(`User [${user?.id}] telegram session operation not found`);
+    console.log(
+      `User [${res.locals.userId}] telegram session operation not found`
+    );
     res.status(404).json({ error: 'Operation not found' });
   }
 });
