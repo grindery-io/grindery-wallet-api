@@ -39,6 +39,9 @@ router.post('/', telegramHashIsValid, async (req, res) => {
   if (!req.body.amount) {
     return res.status(400).json({ error: 'Amount is required' });
   }
+  if (!/^\d+$/.test(req.body.amount) || parseInt(req.body.amount) <= 0) {
+    return res.status(400).json({ error: 'Invalid amount' });
+  }
   console.log(`User [${res.locals.userId}] requested to send a transaction`);
 
   // Check flood control
