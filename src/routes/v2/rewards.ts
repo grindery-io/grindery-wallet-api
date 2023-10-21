@@ -6,6 +6,7 @@ import {
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/constants';
+import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
@@ -205,6 +206,64 @@ router.get('/pending', telegramHashIsValid, async (req, res) => {
   } catch (error) {
     console.error(
       `Error getting pending rewards for user ${res.locals.userId}`,
+      JSON.stringify(error)
+    );
+    return res.status(500).send({ msg: 'An error occurred', error });
+  }
+});
+
+/**
+ * GET /v2/rewards/{id}
+ *
+ * @summary Get single reward
+ * @description Gets single reward from DB collection by id.
+ * @tags Activity
+ * @security BearerAuth
+ * @param {string} id.path - Transaction hash, or doc id
+ * @return {object} 200 - Success response with single reward transaction
+ * @example response - 200 - Success response example
+ * {
+ *   "_id": "6asdfghjff2936fefd07cf93",
+ *   "userTelegramID": "5900000139",
+ *   "walletAddress": "0x1234556751f3D2e4dE9D8B860311936090bcaC95",
+ *   "userName": "undefined",
+ *   "userHandle": "username",
+ *   "userName": "User Name",
+ *   "amount": "10",
+ *   "message": "Optional message",
+ *   "reason": "user_sign_up",
+ *   "transactionHash": "0xdtgbrfve594b7950ef2e5fe6efa89eb4daf6e1424b641eee0dd4db2f8e5fdf8f",
+ *   "parentTransactionHash": "0xdtgbrfve594b7950ef2e5fe6efa89eb4daf6e1424b641eee0dd4db2f8e5fdf8f",
+ *   "dateAdded": "2021-01-01T00:00:00.000Z",
+ *   "status": "pending"
+ * }
+ */
+router.get('/:id', telegramHashIsValid, async (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).send({ msg: 'Invalid id' });
+  }
+  console.log(
+    `User [${res.locals.userId}] requested reward by id ${req.params.id}`
+  );
+  try {
+    const db = await Database.getInstance(req);
+
+    const find: any = {
+      $or: [],
+    };
+
+    if (req.params.id.startsWith('0x')) {
+      find.$or.push({ transactionHash: req.params.id });
+    } else {
+      find.$or.push({ _id: new ObjectId(req.params.id) });
+    }
+    console.log(`User [${res.locals.userId}] reward by id request completed`);
+    return res
+      .status(200)
+      .send(await db.collection(REWARDS_COLLECTION).findOne(find));
+  } catch (error) {
+    console.error(
+      `Error getting reward by id for user [${res.locals.userId}] `,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });
