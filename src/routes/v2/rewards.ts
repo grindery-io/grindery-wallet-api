@@ -217,7 +217,7 @@ router.get('/pending', telegramHashIsValid, async (req, res) => {
  *
  * @summary Get single reward
  * @description Gets single reward from DB collection by id.
- * @tags Activity
+ * @tags Rewards
  * @security BearerAuth
  * @param {string} id.path - Transaction hash, or doc id
  * @return {object} 200 - Success response with single reward transaction
