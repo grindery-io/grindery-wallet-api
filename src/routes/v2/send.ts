@@ -51,7 +51,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     sendTransactionFloodControl[res.locals.userId] &&
     sendTransactionFloodControl[res.locals.userId] > new Date().getTime()
   ) {
-    const newTimeout = new Date().getTime() + 10000;
+    const newTimeout = new Date().getTime() + 30000;
     sendTransactionFloodControl[res.locals.userId] = newTimeout;
     console.info(
       `User [${
@@ -120,7 +120,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
 
     // Set flood control
     sendTransactionFloodControl[res.locals.userId] =
-      new Date().getTime() + 10000;
+      new Date().getTime() + 30000;
     return res.status(200).json({ success: eventRes.data?.success || false });
   } catch (error) {
     console.error(
