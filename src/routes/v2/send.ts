@@ -1,6 +1,8 @@
 import express from 'express';
 import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
+import { Database } from '../../db/conn';
+import { USERS_COLLECTION } from '../../utils/constants';
 
 const router = express.Router();
 const sendTransactionFloodControl: any = {};
@@ -62,6 +64,16 @@ router.post('/', telegramHashIsValid, async (req, res) => {
   }
 
   try {
+    const db = await Database.getInstance(req);
+
+    const user = await db
+      .collection(USERS_COLLECTION)
+      .findOne({ userTelegramID: res.locals.userId });
+
+    if (!user || (user.isBanned && user.isBanned !== 'false')) {
+      return res.status(400).json({ error: 'User is banned' });
+    }
+
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
     if (isSingle) {
