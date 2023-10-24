@@ -72,9 +72,15 @@ router.get('/', telegramHashIsValid, async (req, res) => {
 router.post('/:id', apiKeyIsValid, async (req, res) => {
   try {
     const db = await Database.getInstance(req);
-    const result = await db
-      .collection(USERS_COLLECTION)
-      .updateOne({ userTelegramID: req.params.id }, { $set: req.body });
+    const result = await db.collection(USERS_COLLECTION).updateOne(
+      {
+        $or: [
+          { userTelegramID: req.params.id },
+          { responsePath: req.params.id },
+        ],
+      },
+      { $set: req.body }
+    );
     console.log(`User ${req.params.id} updated`);
     return res.status(200).send(result);
   } catch (error) {
