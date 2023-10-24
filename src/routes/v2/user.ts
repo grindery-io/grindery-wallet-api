@@ -55,12 +55,13 @@ router.get('/', telegramHashIsValid, async (req, res) => {
 });
 
 /**
- * POST /v2/user/{id}
+ * POST /v2/user
  *
  * @summary Update user
  * @description Update user doc in DB
  * @tags User
  * @security BearerAuth
+ * @param {string} id.query - Telegram user id or response path
  * @param {object} request.body - The request body containing the user properties to update
  * @return {object} 200 - Success response
  * @return {object} 404 - Error response if user not found
@@ -69,23 +70,20 @@ router.get('/', telegramHashIsValid, async (req, res) => {
  *   "isBanned": true
  * }
  */
-router.post('/:id', apiKeyIsValid, async (req, res) => {
+router.post('/', apiKeyIsValid, async (req, res) => {
   try {
     const db = await Database.getInstance(req);
     const result = await db.collection(USERS_COLLECTION).updateOne(
       {
-        $or: [
-          { userTelegramID: req.params.id },
-          { responsePath: req.params.id },
-        ],
+        $or: [{ userTelegramID: req.query.id }, { responsePath: req.query.id }],
       },
       { $set: req.body }
     );
-    console.log(`User ${req.params.id} updated`);
+    console.log(`User ${req.query.id} updated`);
     return res.status(200).send(result);
   } catch (error) {
     console.error(
-      `Error updating user ${req.params.id} profile`,
+      `Error updating user ${req.query.id} profile`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });
