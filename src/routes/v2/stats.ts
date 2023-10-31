@@ -76,7 +76,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
  *      "total": 100,
  *      "new": {
  *        "hour": 1,
- *        "day": 10,
+ *        "day": 10
  *      },
  *      "withContacts": {
  *        "total": 20,
