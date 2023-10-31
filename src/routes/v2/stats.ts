@@ -136,10 +136,7 @@ router.get('/app', async (req, res) => {
     );
     return res.status(200).send(stats);
   } catch (error) {
-    console.error(
-      `Error getting user ${res.locals.userId} stats`,
-      JSON.stringify(error)
-    );
+    console.error(`Error getting app stats`, JSON.stringify(error));
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
