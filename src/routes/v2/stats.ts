@@ -69,6 +69,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
  * @description Gets app stats
  * @tags Stats
  * @security BearerAuth
+ * @param {string} history.query - Set to `true` to include a last week history
  * @return {object} 200 - Success response with stats object
  * @example response - 200 - Success response example
  * {
@@ -94,7 +95,7 @@ router.get('/app', async (req, res) => {
   try {
     const db = await Database.getInstance(req);
 
-    const stats = {
+    const stats: AppStatsResponse = {
       users: {
         total: await db
           .collection(USERS_COLLECTION)
@@ -131,6 +132,58 @@ router.get('/app', async (req, res) => {
       },
     };
 
+    if (req.query.history && req.query.history === 'true') {
+      stats.users.new.history = await db
+        .collection(USERS_COLLECTION)
+        .aggregate([
+          {
+            $match: {
+              webAppOpenedFirstDate: {
+                $gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: '%Y-%m-%d',
+                  date: '$webAppOpenedFirstDate',
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray();
+
+      stats.users.withContacts.new.history = await db
+        .collection(USERS_COLLECTION)
+        .aggregate([
+          {
+            $match: {
+              telegramSessionSavedDate: {
+                $gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+              },
+            },
+          },
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: '%Y-%m-%d',
+                  date: '$telegramSessionSavedDate',
+                },
+              },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { _id: 1 } },
+        ])
+        .toArray();
+    }
+
     console.log(
       `App stats request completed in ${new Date().getTime() - timestamp}ms`
     );
@@ -140,5 +193,24 @@ router.get('/app', async (req, res) => {
     return res.status(500).send({ msg: 'An error occurred', error });
   }
 });
+
+type AppStatsResponse = {
+  users: {
+    total: number;
+    new: {
+      hour: number;
+      day: number;
+      history?: { _id: string; count: number }[];
+    };
+    withContacts: {
+      total: number;
+      new: {
+        hour: number;
+        day: number;
+        history?: { _id: string; count: number }[];
+      };
+    };
+  };
+};
 
 export default router;
