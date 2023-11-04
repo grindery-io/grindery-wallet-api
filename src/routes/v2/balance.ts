@@ -30,18 +30,21 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const web3 = new Web3(CHAIN_MAPPING[req.body.chainId][1]);
-    const contract = new web3.eth.Contract(ERC20, req.body.contractAddress);
+    let balance: any = 0;
+    let decimals = 18;
+    if (!req.body.contractAddress || req.body.contractAddress === '0x0') {
+      balance = await web3.eth.getBalance(req.body.userAddress);
+    } else {
+      const contract = new web3.eth.Contract(ERC20, req.body.contractAddress);
 
-    const balance = await contract.methods
-      .balanceOf(req.body.userAddress)
-      .call();
+      balance = await contract.methods.balanceOf(req.body.userAddress).call();
+      decimals = await contract.methods.decimals().call();
+    }
 
     res.status(200).json({
       balanceWei: balance,
       balanceEther: BigNumber(balance)
-        .div(
-          BigNumber(10).pow(BigNumber(await contract.methods.decimals().call()))
-        )
+        .div(BigNumber(10).pow(BigNumber(decimals)))
         .toString(),
     });
   } catch (error: any) {
