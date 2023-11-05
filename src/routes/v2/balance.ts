@@ -32,7 +32,11 @@ router.post('/', async (req, res) => {
     const web3 = new Web3(CHAIN_MAPPING[req.body.chainId][1]);
     let balance: any = 0;
     let decimals = 18;
-    if (!req.body.contractAddress || req.body.contractAddress === '0x0') {
+    if (
+      !req.body.contractAddress ||
+      req.body.contractAddress === '0x0' ||
+      req.body.contractAddress === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+    ) {
       balance = await web3.eth.getBalance(req.body.userAddress);
     } else {
       const contract = new web3.eth.Contract(ERC20, req.body.contractAddress);
