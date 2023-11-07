@@ -34,6 +34,8 @@ yarn install
 
 `API_KEY`
 
+`ANKR_KEY`
+
 - Run the following command
 
 ```
