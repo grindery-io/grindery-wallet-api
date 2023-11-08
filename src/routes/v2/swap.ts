@@ -3,6 +3,7 @@ import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
 import { USERS_COLLECTION } from '../../utils/constants';
+import Web3 from 'web3';
 
 const router = express.Router();
 const swapFloodControl: any = {};
@@ -141,8 +142,12 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.query.tokenIn}`
     );
 
-    const amountIn =
-      parseFloat(req.query.amountIn as string) * 10 ** tokenIn.data[0].decimals;
+    const amountIn = String(
+      Web3.utils.toBN(
+        parseFloat(req.query.amountIn as string) *
+          10 ** tokenIn?.data?.[0]?.decimals || 18
+      )
+    );
 
     const routes = await axios.get(
       `https://api.enso.finance/api/v1/shortcuts/route?fromAddress=${user.patchwallet}&tokenIn=${req.query.tokenIn}&amountIn=${amountIn}&tokenOut=${req.query.tokenOut}&toEOA=true&priceImpact=true&chainId=137&tokenInAmountToTransfer=${amountIn}`,
