@@ -38,6 +38,10 @@ yarn install
 
 `ENSO_API_KEY`
 
+`COINMARKETCAP_API_URL`
+
+`COINMARKETCAP_API_KEY`
+
 - Run the following command
 
 ```
