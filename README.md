@@ -36,6 +36,8 @@ yarn install
 
 `ANKR_KEY`
 
+`ENSO_API_KEY`
+
 - Run the following command
 
 ```

@@ -11,6 +11,7 @@ import balance from './balance';
 import activity from './activity';
 import userActivity from './userActivity';
 import rewards from './rewards';
+import swap from './swap';
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use('/balance', balance);
 router.use('/activity', activity);
 router.use('/userActivity', userActivity);
 router.use('/rewards', rewards);
+router.use('/swap', swap);
 
 export default router;
