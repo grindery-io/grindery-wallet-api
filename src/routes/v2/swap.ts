@@ -137,8 +137,15 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
+    const tokenIn = await axios.get(
+      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.query.tokenIn}`
+    );
+
+    const amountIn =
+      parseFloat(req.query.amountIn as string) * 10 ** tokenIn.data[0].decimals;
+
     const routes = await axios.get(
-      `https://api.enso.finance/api/v1/shortcuts/route?fromAddress=${user.patchwallet}&tokenIn=${req.query.tokenIn}&amountIn=${req.query.amountIn}&tokenOut=${req.query.tokenOut}&toEOA=true&priceImpact=true&chainId=137&tokenInAmountToTransfer=${req.query.amountIn}`,
+      `https://api.enso.finance/api/v1/shortcuts/route?fromAddress=${user.patchwallet}&tokenIn=${req.query.tokenIn}&amountIn=${amountIn}&tokenOut=${req.query.tokenOut}&toEOA=true&priceImpact=true&chainId=137&tokenInAmountToTransfer=${amountIn}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.ENSO_API_KEY}`,
