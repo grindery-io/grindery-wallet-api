@@ -20,9 +20,15 @@ const swapFloodControl: any = {};
  * @return {object} 404 - Error response if operation not found
  * @example request - Example request body
  * {
- *   "to": ["some-address"],
- *   "value": ["some-value"],
- *   "data": ["0x"]
+ *  "to": "0x",
+ *  "data": "0x",
+ *  "value": "100",
+ *  "tokenIn": "0x",
+ *  "amountIn": "100",
+ *  "tokenOut": "0x",
+ *  "amountOut": "100",
+ *  "gas": "100",
+ *  "priceImpact": "100"
  * }
  * @example response - 200 - Success response example
  * {
@@ -36,14 +42,16 @@ const swapFloodControl: any = {};
  * }
  */
 router.post('/', telegramHashIsValid, async (req, res) => {
-  if (!req.body.to) {
-    return res.status(400).json({ error: 'Recipient is required' });
-  }
-  if (!req.body.value) {
-    return res.status(400).json({ error: 'Value is required' });
-  }
-  if (!req.body.data) {
-    return res.status(400).json({ error: 'Data is required' });
+  if (
+    !req.body.to ||
+    !req.body.data ||
+    !req.body.value ||
+    !req.body.tokenIn ||
+    !req.body.tokenOut ||
+    !req.body.amountIn ||
+    !req.body.amountOut
+  ) {
+    return res.status(400).json({ error: 'Missing required params' });
   }
   console.log(`User [${res.locals.userId}] requested tokens swap`);
 
@@ -76,11 +84,17 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     }
 
     const data = {
-      event: 'new_swap',
+      event: 'swap',
       params: {
+        userTelegramID: res.locals.userId,
         to: req.body.to,
-        value: req.body.value,
         data: req.body.data,
+        tokenIn: req.body.tokenIn,
+        amountIn: req.body.amountIn,
+        tokenOut: req.body.tokenOut,
+        amountOut: req.body.amountOut,
+        gas: req.body.gas,
+        priceImpact: req.body.priceImpact,
       },
     };
 
