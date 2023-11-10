@@ -4,6 +4,7 @@ import expressJSDocSwagger from 'express-jsdoc-swagger';
 import './loadEnvironment';
 import v1 from './routes/v1';
 import v2 from './routes/v2/index';
+import Moralis from 'moralis';
 const appPackage = require('../package.json');
 
 const { json, urlencoded } = pkg;
@@ -122,6 +123,14 @@ app.get('/', (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
+
+const initMoralis = async () => {
+  await Moralis.start({
+    apiKey: process.env.MORALIS_API_KEY,
+  });
+};
+
+initMoralis();
 
 const server = app.listen(port, function () {
   console.log(`Wallet API listening on port ${port}`);

@@ -1,7 +1,7 @@
 {
   "name": "grindery-wallet-api",
   "type": "commonjs",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@moralisweb3/common-evm-utils": "^2.23.2",
     "airtable": "^0.12.2",
     "axios": "^1.4.0",
     "bignumber.js": "^9.1.1",
@@ -23,6 +24,7 @@
     "express-jsdoc-swagger": "^1.8.0",
     "mongodb": "^5.7.0",
     "mongodb-memory-server": "^8.15.1",
+    "moralis": "^2.23.2",
     "telegram": "^2.18.26",
     "typescript": "^5.2.2",
     "uuidv4": "^6.2.13",
