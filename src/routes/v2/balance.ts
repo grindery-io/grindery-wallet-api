@@ -2,6 +2,10 @@ import express from 'express';
 import Web3 from 'web3';
 import { CHAIN_MAPPING } from '../../utils/chains';
 import BigNumber from 'bignumber.js';
+import telegramHashIsValid from '../../utils/telegramHashIsValid';
+import { Database } from '../../db/conn';
+import { USERS_COLLECTION } from '../../utils/constants';
+import axios from 'axios';
 
 const ERC20 = require('../../abi/ERC20.json');
 const router = express.Router();
@@ -54,6 +58,55 @@ router.post('/', async (req, res) => {
   } catch (error: any) {
     console.error('Error:', JSON.stringify(error));
     res.status(500).json({ error: error?.message || '' });
+  }
+});
+
+/**
+ * GET /v2/balance
+ *
+ * @summary Get user balance
+ * @description Gets balance for all user tokens
+ * @tags Balance
+ * @security BearerAuth
+ * @return {object} 200 - Success response
+ */
+router.get('/', telegramHashIsValid, async (req, res) => {
+  console.log(`User [${res.locals.userId}] requested balance`);
+  try {
+    const db = await Database.getInstance(req);
+
+    const user = await db
+      .collection(USERS_COLLECTION)
+      .findOne({ userTelegramID: res.locals.userId });
+
+    if (!user || (user.isBanned && user.isBanned !== 'false')) {
+      return res.status(400).json({ error: 'User is banned' });
+    }
+
+    const balance = await axios.post(
+      `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
+      {
+        jsonrpc: '2.0',
+        method: 'ankr_getAccountBalance',
+        params: {
+          blockchain: 'polygon',
+          walletAddress: user?.patchwallet || '',
+          onlyWhitelisted: false,
+        },
+        id: new Date().toString(),
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    return res.status(200).json(balance.data?.result || {});
+  } catch (error) {
+    console.error(
+      `Error getting balance for user ${res.locals.userId}`,
+      JSON.stringify(error)
+    );
+    return res.status(500).send({ success: false, error: 'An error occurred' });
   }
 });
 
