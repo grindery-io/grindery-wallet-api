@@ -111,7 +111,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     };
 
     const eventRes = await axios.post(
-      `https://bot-auth-api-staging.grindery.org/v1/webhook`,
+      `https://bot-auth-api.grindery.org/v1/webhook`,
       data,
       {
         headers: {
