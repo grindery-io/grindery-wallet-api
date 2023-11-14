@@ -84,13 +84,13 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     }
 
     const tokenIn = await axios.get(
-      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.query.tokenIn}`
+      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.body.tokenIn}`
     );
 
     const amountIn = String(
       Web3.utils.toBN(
         parseFloat(req.body.amountIn as string) *
-          10 ** tokenIn?.data?.[0]?.decimals || 18
+          10 ** (tokenIn?.data?.[0]?.decimals || 18)
       )
     );
 
@@ -171,7 +171,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     const amountIn = String(
       Web3.utils.toBN(
         parseFloat(req.query.amountIn as string) *
-          10 ** tokenIn?.data?.[0]?.decimals || 18
+          10 ** (tokenIn?.data?.[0]?.decimals || 18)
       )
     );
 
