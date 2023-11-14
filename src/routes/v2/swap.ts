@@ -89,7 +89,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
 
     const amountIn = String(
       Web3.utils.toBN(
-        parseFloat(req.query.amountIn as string) *
+        parseFloat(req.body.amountIn as string) *
           10 ** tokenIn?.data?.[0]?.decimals || 18
       )
     );
