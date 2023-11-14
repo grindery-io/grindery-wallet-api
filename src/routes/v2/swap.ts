@@ -83,6 +83,17 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
+    const tokenIn = await axios.get(
+      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.query.tokenIn}`
+    );
+
+    const amountIn = String(
+      Web3.utils.toBN(
+        parseFloat(req.query.amountIn as string) *
+          10 ** tokenIn?.data?.[0]?.decimals || 18
+      )
+    );
+
     const data = {
       event: 'swap',
       params: {
@@ -91,7 +102,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         data: req.body.data,
         value: req.body.value,
         tokenIn: req.body.tokenIn,
-        amountIn: req.body.amountIn,
+        amountIn: amountIn,
         tokenOut: req.body.tokenOut,
         amountOut: req.body.amountOut,
         gas: req.body.gas,
