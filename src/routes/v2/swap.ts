@@ -89,6 +89,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         userTelegramID: res.locals.userId,
         to: req.body.to,
         data: req.body.data,
+        value: req.body.value,
         tokenIn: req.body.tokenIn,
         amountIn: req.body.amountIn,
         tokenOut: req.body.tokenOut,
