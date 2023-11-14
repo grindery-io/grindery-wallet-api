@@ -21,7 +21,9 @@ const sendTransactionFloodControl: any = {};
  * {
  *   "recipientTgId": "some-id",
  *   "amount": "10",
- *   "message": "optional message"
+ *   "message": "optional message",
+ *   "recipientHandle": "optional handle",
+ *   "recipientName": "optional name"
  * }
  * @example response - 200 - Success response example
  * {
@@ -85,6 +87,12 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       if (req.body.message) {
         params.message = req.body.message;
       }
+      if (req.body.recipientHandle) {
+        params.recipientHandle = req.body.recipientHandle;
+      }
+      if (req.body.recipientName) {
+        params.recipientName = req.body.recipientName;
+      }
       data = {
         event: 'new_transaction',
         params,
@@ -92,7 +100,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     } else {
       data = {
         event: 'new_transaction_batch',
-        params: req.body.recipientTgId.map((id: any) => {
+        params: req.body.recipientTgId.map((id: any, index: number) => {
           const params: any = {
             recipientTgId: id,
             amount: req.body.amount,
@@ -100,6 +108,15 @@ router.post('/', telegramHashIsValid, async (req, res) => {
           };
           if (req.body.message) {
             params.message = req.body.message;
+          }
+          if (
+            req.body.recipientHandle &&
+            Array.isArray(req.body.recipientHandle)
+          ) {
+            params.recipientHandle = req.body.recipientHandle[index];
+          }
+          if (req.body.recipientName && Array.isArray(req.body.recipientName)) {
+            params.recipientName = req.body.recipientName[index];
           }
           return params;
         }),
