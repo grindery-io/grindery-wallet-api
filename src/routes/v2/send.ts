@@ -194,22 +194,22 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
     return res.status(400).json({ error: 'Bad request' });
   }
 
-  const transactionData: any = decrypt(JSON.parse(req.body.transactionData));
-
-  if (
-    !transactionData.senderTgId ||
-    !transactionData.recipientTgId ||
-    !transactionData.amount ||
-    transactionData.senderTgId !== req.body.senderTgId ||
-    transactionData.recipientTgId !== req.body.recipientTgId ||
-    transactionData.amount !== req.body.amount
-  ) {
-    return res.status(400).json({ error: 'Bad request' });
-  }
-
-  console.log(`User [${transactionData.senderTgId}] confirmed a transaction`);
-
   try {
+    const transactionData: any = JSON.parse(decrypt(req.body.transactionData));
+
+    if (
+      !transactionData.senderTgId ||
+      !transactionData.recipientTgId ||
+      !transactionData.amount ||
+      transactionData.senderTgId !== req.body.senderTgId ||
+      transactionData.recipientTgId !== req.body.recipientTgId ||
+      transactionData.amount !== req.body.amount
+    ) {
+      return res.status(400).json({ error: 'Bad request' });
+    }
+
+    console.log(`User [${transactionData.senderTgId}] confirmed a transaction`);
+
     const isSingle = !Array.isArray(transactionData.recipientTgId);
     let data = {};
     if (isSingle) {
