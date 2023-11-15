@@ -3,6 +3,8 @@ import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
 import { USERS_COLLECTION } from '../../utils/constants';
+import { apiKeyIsValid } from '../../utils/apiKeyIsValid';
+import { decrypt, encrypt } from '../../utils/crypt';
 
 const router = express.Router();
 const sendTransactionFloodControl: any = {};
@@ -76,6 +78,45 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
+    if (req.body.withConfirmation) {
+      const transaction = {
+        recipientTgId: req.body.recipientTgId,
+        amount: req.body.amount,
+        senderTgId: res.locals.userId,
+        message: req.body.message,
+        recipientHandle: req.body.recipientHandle,
+        recipientName: req.body.recipientName,
+      };
+
+      const confirmation = {
+        event: 'new_transaction',
+        source: 'wallet-api',
+        transaction,
+        transactionData: encrypt(
+          JSON.stringify(transaction),
+          'aes-256-cbc',
+          'base64',
+          process.env.BOT_TOKEN
+        ),
+        apiKey: process.env.API_KEY,
+        responsePath: user.responsePath,
+      };
+
+      await axios.post('https://flowxo.com/hooks/a/89mge2d7', confirmation, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(`User [${res.locals.userId}] transaction request completed`);
+
+      // Set flood control
+      sendTransactionFloodControl[res.locals.userId] =
+        new Date().getTime() + 30000;
+
+      return res.status(200).json({ success: true });
+    }
+
     const isSingle = !Array.isArray(req.body.recipientTgId);
     let data = {};
     if (isSingle) {
@@ -144,6 +185,108 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       `Error sending transaction for user ${res.locals.userId}`,
       JSON.stringify(error)
     );
+    return res.status(500).send({ success: false, error: 'An error occurred' });
+  }
+});
+
+router.post('/confirm', apiKeyIsValid, async (req, res) => {
+  if (
+    !req.body.transactionData ||
+    !req.body.recipientTgId ||
+    !req.body.amount ||
+    !req.body.senderTgId
+  ) {
+    return res.status(400).json({ error: 'Bad request' });
+  }
+
+  const transactionData: any = decrypt(
+    JSON.parse(req.body.transactionData),
+    'aes-256-cbc',
+    'base64',
+    process.env.BOT_TOKEN
+  );
+
+  if (
+    !transactionData.senderTgId ||
+    !transactionData.recipientTgId ||
+    !transactionData.amount ||
+    transactionData.senderTgId !== req.body.senderTgId ||
+    transactionData.recipientTgId !== req.body.recipientTgId ||
+    transactionData.amount !== req.body.amount
+  ) {
+    return res.status(400).json({ error: 'Bad request' });
+  }
+
+  console.log(`User [${transactionData.senderTgId}] confirmed a transaction`);
+
+  try {
+    const isSingle = !Array.isArray(transactionData.recipientTgId);
+    let data = {};
+    if (isSingle) {
+      const params: any = {
+        recipientTgId: transactionData.recipientTgId,
+        amount: transactionData.amount,
+        senderTgId: transactionData.senderTgId,
+      };
+      if (transactionData.message) {
+        params.message = transactionData.message;
+      }
+      if (transactionData.recipientHandle) {
+        params.recipientHandle = transactionData.recipientHandle;
+      }
+      if (transactionData.recipientName) {
+        params.recipientName = transactionData.recipientName;
+      }
+      data = {
+        event: 'new_transaction',
+        params,
+      };
+    } else {
+      data = {
+        event: 'new_transaction_batch',
+        params: transactionData.recipientTgId.map((id: any, index: number) => {
+          const params: any = {
+            recipientTgId: id,
+            amount: transactionData.amount,
+            senderTgId: transactionData.senderTgId,
+          };
+          if (transactionData.message) {
+            params.message = transactionData.message;
+          }
+          if (
+            transactionData.recipientHandle &&
+            Array.isArray(transactionData.recipientHandle)
+          ) {
+            params.recipientHandle = transactionData.recipientHandle[index];
+          }
+          if (
+            transactionData.recipientName &&
+            Array.isArray(transactionData.recipientName)
+          ) {
+            params.recipientName = transactionData.recipientName[index];
+          }
+          return params;
+        }),
+      };
+    }
+
+    const eventRes = await axios.post(
+      `https://bot-auth-api.grindery.org/v1/webhook`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    console.log(
+      `User [${transactionData.senderTgId}] transaction transaction completed`
+    );
+
+    return res.status(200).json({ success: eventRes.data?.success || false });
+  } catch (error) {
+    console.error(`Error sending transaction`, JSON.stringify(error));
     return res.status(500).send({ success: false, error: 'An error occurred' });
   }
 });
