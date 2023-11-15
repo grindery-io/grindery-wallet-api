@@ -225,6 +225,7 @@ router.get('/:id', telegramHashIsValid, async (req, res) => {
       find.$or.push({ TxId: req.params.id });
     } else {
       find.$or.push({ _id: new ObjectId(req.params.id) });
+      find.$or.push({ _id: req.params.id });
     }
     console.log(`User [${res.locals.userId}] activity by id request completed`);
     return res
