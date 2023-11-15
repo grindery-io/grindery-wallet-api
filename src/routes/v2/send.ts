@@ -92,12 +92,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         event: 'new_transaction',
         source: 'wallet-api',
         transaction,
-        transactionData: encrypt(
-          JSON.stringify(transaction),
-          'aes-256-cbc',
-          'base64',
-          process.env.BOT_TOKEN
-        ),
+        transactionData: encrypt(JSON.stringify(transaction)),
         apiKey: process.env.API_KEY,
         responsePath: user.responsePath,
       };
@@ -199,12 +194,7 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
     return res.status(400).json({ error: 'Bad request' });
   }
 
-  const transactionData: any = decrypt(
-    JSON.parse(req.body.transactionData),
-    'aes-256-cbc',
-    'base64',
-    process.env.BOT_TOKEN
-  );
+  const transactionData: any = decrypt(JSON.parse(req.body.transactionData));
 
   if (
     !transactionData.senderTgId ||
