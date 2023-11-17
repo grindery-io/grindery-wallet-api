@@ -7,6 +7,8 @@ import { deleteUserTelegramSession } from '../../utils/telegram';
 import { decrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { TRANSFERS_COLLECTION, USERS_COLLECTION } from '../../utils/constants';
+import { getSocialContacts } from '../../utils/getSocialContacts';
+import _ from 'lodash';
 
 const router = express.Router();
 
@@ -160,6 +162,78 @@ router.get('/photo', telegramHashIsValid, async (req, res) => {
   } catch (error) {
     console.error(
       `Error getting user ${username} photo`,
+      JSON.stringify(error)
+    );
+    return res.status(500).send({ msg: 'An error occurred', error });
+  }
+});
+
+/**
+ * GET /v2/contacts/social
+ *
+ * @summary Get user social graph
+ * @description Gets user social graph
+ * @tags Contacts
+ * @security BearerAuth
+ * @return {object} 200 - Success response
+ * @return {object} 404 - Error response
+ */
+router.get('/social', telegramHashIsValid, async (req, res) => {
+  console.log(`User [${res.locals.userId}] requested their social contacts`);
+  try {
+    const contacts = await getSocialContacts(res.locals.userId, req);
+
+    for (const contact of contacts) {
+      contact.score = 1;
+      contact.socialContacts = await getSocialContacts(
+        contact.userTelegramID,
+        req,
+        [...contacts.map((c: any) => c.userTelegramID), res.locals.userId]
+      );
+    }
+
+    const flatSocialContacts: any[] = _.flatten(
+      contacts.map((c: any) => c.socialContacts)
+    );
+
+    for (const contact of contacts) {
+      for (const socialContact of contact.socialContacts) {
+        socialContact.score = 0;
+
+        for (var i = 0; i < flatSocialContacts.length; i++) {
+          if (
+            flatSocialContacts[i].userTelegramID ===
+            socialContact.userTelegramID
+          ) {
+            socialContact.score = socialContact.score + 0.1;
+          }
+        }
+
+        if (socialContact.score >= 1) {
+          socialContact.score = 0.9;
+        }
+      }
+    }
+
+    const flatContacts: any[] = _.uniqBy(
+      _.flatten([
+        ...contacts.map((c: any) =>
+          c.socialContacts.map((sc: any) => ({
+            ...sc,
+            socialContacts: undefined,
+          }))
+        ),
+        ...contacts.map((c: any) => ({ ...c, socialContacts: undefined })),
+      ])
+        .filter((c: any) => c.score > 0)
+        .sort((a, b) => b.score - a.score),
+      'userTelegramID'
+    );
+    console.log(`User [${res.locals.userId}] social request completed`);
+    return res.status(200).json({ flatContacts, contacts });
+  } catch (error) {
+    console.error(
+      `Error getting user ${res.locals.userId} social`,
       JSON.stringify(error)
     );
     return res.status(500).send({ msg: 'An error occurred', error });
