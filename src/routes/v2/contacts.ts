@@ -226,7 +226,7 @@ router.get('/social', telegramHashIsValid, async (req, res) => {
         ...contacts.map((c: any) => ({ ...c, socialContacts: undefined })),
       ])
         .filter((c: any) => c.score > 0)
-        .sort((a, b) => b.score - a.score),
+        .sort((a: any, b: any) => b.score - a.score),
       'userTelegramID'
     );
     console.log(`User [${res.locals.userId}] social request completed`);
