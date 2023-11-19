@@ -171,8 +171,8 @@ router.get('/photo', telegramHashIsValid, async (req, res) => {
 /**
  * GET /v2/contacts/social
  *
- * @summary Get user social graph
- * @description Gets user social graph
+ * @summary Get user social contacts
+ * @description Gets user social contacts
  * @tags Contacts
  * @security BearerAuth
  * @return {object} 200 - Success response
@@ -230,7 +230,7 @@ router.get('/social', telegramHashIsValid, async (req, res) => {
       'userTelegramID'
     );
     console.log(`User [${res.locals.userId}] social request completed`);
-    return res.status(200).json({ flatContacts, contacts });
+    return res.status(200).json(flatContacts);
   } catch (error) {
     console.error(
       `Error getting user ${res.locals.userId} social`,

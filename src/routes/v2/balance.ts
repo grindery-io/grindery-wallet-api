@@ -100,6 +100,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       }
     );
 
+    console.log(`User [${res.locals.userId}] balance request completed`);
     return res.status(200).json(balance.data?.result || {});
   } catch (error) {
     console.error(
