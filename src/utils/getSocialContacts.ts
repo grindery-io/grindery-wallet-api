@@ -17,7 +17,7 @@ export const getSocialContacts = async (
       .find({
         $or: [{ senderTgId: id }, { recipientTgId: id }],
       })
-      .limit(100)
+      .limit(1000)
       .toArray();
 
     const referralRewards = await db
@@ -25,7 +25,7 @@ export const getSocialContacts = async (
       .find({
         sponsoredUserTelegramID: id,
       })
-      .limit(100)
+      .limit(1000)
       .toArray();
 
     const users = await db
@@ -69,7 +69,7 @@ export const getSocialContacts = async (
           },
         ],
       })
-      .limit(100)
+      .limit(1000)
       .project({
         telegramSession: 0,
         telegramSessionSavedDate: 0,
