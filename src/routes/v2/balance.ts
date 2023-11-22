@@ -68,6 +68,7 @@ router.post('/', async (req, res) => {
  * @description Gets balance for all user tokens
  * @tags Balance
  * @security BearerAuth
+ * @param {string} chain.query - blockchain name, or a comma separated list of names. See https://www.ankr.com/docs/advanced-api/token-methods/#ankr_getaccountbalance.
  * @return {object} 200 - Success response
  */
 router.get('/', telegramHashIsValid, async (req, res) => {
@@ -89,7 +90,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
         jsonrpc: '2.0',
         method: 'ankr_getAccountBalance',
         params: {
-          blockchain: 'polygon',
+          blockchain: req.query.chain || 'polygon',
           walletAddress: user?.patchwallet || '',
           onlyWhitelisted: false,
         },

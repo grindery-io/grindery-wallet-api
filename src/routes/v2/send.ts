@@ -25,7 +25,8 @@ const sendTransactionFloodControl: any = {};
  *   "amount": "10",
  *   "message": "optional message",
  *   "recipientHandle": "optional handle",
- *   "recipientName": "optional name"
+ *   "recipientName": "optional name",
+ *   "chainId": "137"
  * }
  * @example response - 200 - Success response example
  * {
@@ -86,6 +87,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         message: req.body.message,
         recipientHandle: req.body.recipientHandle,
         recipientName: req.body.recipientName,
+        chainId: req.body.chainId || '137',
       };
 
       const confirmation = {
@@ -119,6 +121,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         recipientTgId: req.body.recipientTgId,
         amount: req.body.amount,
         senderTgId: res.locals.userId,
+        chainId: req.body.chainId || '137',
       };
       if (req.body.message) {
         params.message = req.body.message;
@@ -141,6 +144,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
             recipientTgId: id,
             amount: req.body.amount,
             senderTgId: res.locals.userId,
+            chainId: req.body.chainId || '137',
           };
           if (req.body.message) {
             params.message = req.body.message;
@@ -217,6 +221,7 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
         recipientTgId: transactionData.recipientTgId,
         amount: transactionData.amount,
         senderTgId: transactionData.senderTgId,
+        chainId: transactionData.chainId || '137',
       };
       if (transactionData.message) {
         params.message = transactionData.message;
@@ -239,6 +244,7 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
             recipientTgId: id,
             amount: transactionData.amount,
             senderTgId: transactionData.senderTgId,
+            chainId: transactionData.chainId || '137',
           };
           if (transactionData.message) {
             params.message = transactionData.message;

@@ -1,7 +1,7 @@
 {
   "name": "grindery-wallet-api",
   "type": "commonjs",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "",
   "main": "dist/index.js",
   "scripts": {

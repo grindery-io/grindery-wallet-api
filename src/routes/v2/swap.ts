@@ -28,7 +28,8 @@ const swapFloodControl: any = {};
  *  "tokenOut": "0x",
  *  "amountOut": "100",
  *  "gas": "100",
- *  "priceImpact": "100"
+ *  "priceImpact": "100",
+ *  "chainId": "137"
  * }
  * @example response - 200 - Success response example
  * {
@@ -84,7 +85,9 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     }
 
     const tokenIn = await axios.get(
-      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.body.tokenIn}`
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
+        req.body.chainId || '137'
+      }&address=${req.body.tokenIn}`
     );
 
     const amountIn = String(
@@ -107,6 +110,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         amountOut: req.body.amountOut,
         gas: req.body.gas,
         priceImpact: req.body.priceImpact,
+        chainId: req.body.chainId || '137',
       },
     };
 
@@ -144,6 +148,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
  * @param {string} tokenIn.query - Token In contract address
  * @param {string} tokenOut.query - Token Out contract address
  * @param {string} amountIn.query - Amount In (in wei)
+ * @param {string} [chainId.query] - Chain ID (default: 137)
  * @return {object} 200 - Success response with stats object
  * @example response - 200 - Success response example
  * []
@@ -165,7 +170,9 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     }
 
     const tokenIn = await axios.get(
-      `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${req.query.tokenIn}`
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
+        req.query.chainId || '137'
+      }&address=${req.query.tokenIn}`
     );
 
     const amountIn = String(
@@ -176,7 +183,13 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     );
 
     const routes = await axios.get(
-      `https://api.enso.finance/api/v1/shortcuts/route?fromAddress=${user.patchwallet}&tokenIn=${req.query.tokenIn}&amountIn=${amountIn}&tokenOut=${req.query.tokenOut}&toEOA=true&priceImpact=true&chainId=137&tokenInAmountToTransfer=${amountIn}`,
+      `https://api.enso.finance/api/v1/shortcuts/route?fromAddress=${
+        user.patchwallet
+      }&tokenIn=${req.query.tokenIn}&amountIn=${amountIn}&tokenOut=${
+        req.query.tokenOut
+      }&toEOA=true&priceImpact=true&chainId=${
+        req.query.chainId || '137'
+      }&tokenInAmountToTransfer=${amountIn}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.ENSO_API_KEY}`,
