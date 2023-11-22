@@ -5,6 +5,43 @@ import axios from 'axios';
 const router = express.Router();
 
 /**
+ * GET /v2/tokens
+ *
+ * @summary Get tokens list
+ * @description Gets tokens list from ankr api
+ * @tags Tokens
+ * @security BearerAuth
+ * @param {string} chain.query - blockchain name. See https://www.ankr.com/docs/advanced-api/token-methods/#ankr_getcurrencies.
+ * @return {object} 200 - Success response
+ */
+router.get('/', telegramHashIsValid, async (req, res) => {
+  try {
+    const currencies = await axios.post(
+      `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
+      {
+        jsonrpc: '2.0',
+        method: 'ankr_getCurrencies',
+        params: {
+          blockchain: req.query.chain || 'polygon',
+        },
+        id: new Date().toString(),
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    return res.status(200).json(currencies.data?.result?.currencies || []);
+  } catch (error) {
+    console.error(
+      `Error getting tokens list for user ${res.locals.userId}`,
+      JSON.stringify(error)
+    );
+    return res.status(500).send({ success: false, error: 'An error occurred' });
+  }
+});
+
+/**
  * GET /v2/tokens/price
  *
  * @summary Get token price
