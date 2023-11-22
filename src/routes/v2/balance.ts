@@ -90,7 +90,9 @@ router.get('/', telegramHashIsValid, async (req, res) => {
         jsonrpc: '2.0',
         method: 'ankr_getAccountBalance',
         params: {
-          blockchain: req.query.chain || 'polygon',
+          blockchain: req.query.chain
+            ? (req.query.chain as string).split(',')
+            : 'polygon',
           walletAddress: user?.patchwallet || '',
           onlyWhitelisted: false,
         },
@@ -100,6 +102,8 @@ router.get('/', telegramHashIsValid, async (req, res) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
+
+    console.log('balance', JSON.stringify(balance.data));
 
     console.log(`User [${res.locals.userId}] balance request completed`);
     return res.status(200).json(balance.data?.result || {});
