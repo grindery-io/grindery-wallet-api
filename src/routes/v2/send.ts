@@ -8,6 +8,7 @@ import { decrypt, encrypt } from '../../utils/crypt';
 
 const router = express.Router();
 const sendTransactionFloodControl: any = {};
+const g1TokenAddress = '0xe36BD65609c08Cd17b53520293523CF4560533d0';
 
 /**
  * POST /v2/send
@@ -87,7 +88,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         message: req.body.message,
         recipientHandle: req.body.recipientHandle,
         recipientName: req.body.recipientName,
-        chainId: req.body.chainId || '137',
+        chainId: `eip155:${req.body.chainId || '137'}`,
+        tokenAddress: req.body.tokenAddress || g1TokenAddress,
       };
 
       const confirmation = {
@@ -121,7 +123,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         recipientTgId: req.body.recipientTgId,
         amount: req.body.amount,
         senderTgId: res.locals.userId,
-        chainId: req.body.chainId || '137',
+        chainId: `eip155:${req.body.chainId || '137'}`,
+        tokenAddress: req.body.tokenAddress || g1TokenAddress,
       };
       if (req.body.message) {
         params.message = req.body.message;
@@ -144,7 +147,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
             recipientTgId: id,
             amount: req.body.amount,
             senderTgId: res.locals.userId,
-            chainId: req.body.chainId || '137',
+            chainId: `eip155:${req.body.chainId || '137'}`,
+            tokenAddress: req.body.tokenAddress || g1TokenAddress,
           };
           if (req.body.message) {
             params.message = req.body.message;
@@ -221,7 +225,8 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
         recipientTgId: transactionData.recipientTgId,
         amount: transactionData.amount,
         senderTgId: transactionData.senderTgId,
-        chainId: transactionData.chainId || '137',
+        chainId: transactionData.chainId || 'eip155:137',
+        tokenAddress: transactionData.tokenAddress || g1TokenAddress,
       };
       if (transactionData.message) {
         params.message = transactionData.message;
@@ -244,7 +249,8 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
             recipientTgId: id,
             amount: transactionData.amount,
             senderTgId: transactionData.senderTgId,
-            chainId: transactionData.chainId || '137',
+            chainId: transactionData.chainId || 'eip155:137',
+            tokenAddress: transactionData.tokenAddress || g1TokenAddress,
           };
           if (transactionData.message) {
             params.message = transactionData.message;

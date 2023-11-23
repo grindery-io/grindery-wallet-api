@@ -110,7 +110,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         amountOut: req.body.amountOut,
         gas: req.body.gas,
         priceImpact: req.body.priceImpact,
-        chainId: req.body.chainId || '137',
+        chainId: `eip155:${req.body.chainId || '137'}`,
       },
     };
 
