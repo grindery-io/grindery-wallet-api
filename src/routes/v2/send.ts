@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import Web3 from 'web3';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
 import { USERS_COLLECTION } from '../../utils/constants';
@@ -47,7 +48,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
   if (!req.body.amount) {
     return res.status(400).json({ error: 'Amount is required' });
   }
-  if (!/^\d+$/.test(req.body.amount) || parseInt(req.body.amount) <= 0) {
+  if (isNaN(parseFloat(req.body.amount)) || parseFloat(req.body.amount) <= 0) {
     return res.status(400).json({ error: 'Invalid amount' });
   }
   console.log(`User [${res.locals.userId}] requested to send a transaction`);
@@ -80,6 +81,20 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
+    const token = await axios.get(
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
+        req.body.chainId || '137'
+      }&address=${req.body.tokenAddress || g1TokenAddress}`
+    );
+
+    const amountWei = String(
+      Web3.utils.toBN(
+        parseFloat(req.body.amount as string) *
+          10 ** (token?.data?.[0]?.decimals || 18)
+      )
+    );
+    const tokenSymbol = token?.data?.[0]?.symbol || 'G1';
+
     if (req.body.withConfirmation) {
       const transaction = {
         recipientTgId: req.body.recipientTgId,
@@ -90,6 +105,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         recipientName: req.body.recipientName,
         chainId: `eip155:${req.body.chainId || '137'}`,
         tokenAddress: req.body.tokenAddress || g1TokenAddress,
+        amountWei,
+        tokenSymbol,
       };
 
       const confirmation = {
@@ -125,6 +142,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         senderTgId: res.locals.userId,
         chainId: `eip155:${req.body.chainId || '137'}`,
         tokenAddress: req.body.tokenAddress || g1TokenAddress,
+        amountWei,
+        tokenSymbol,
       };
       if (req.body.message) {
         params.message = req.body.message;
@@ -149,6 +168,8 @@ router.post('/', telegramHashIsValid, async (req, res) => {
             senderTgId: res.locals.userId,
             chainId: `eip155:${req.body.chainId || '137'}`,
             tokenAddress: req.body.tokenAddress || g1TokenAddress,
+            amountWei,
+            tokenSymbol,
           };
           if (req.body.message) {
             params.message = req.body.message;
@@ -227,6 +248,8 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
         senderTgId: transactionData.senderTgId,
         chainId: transactionData.chainId || 'eip155:137',
         tokenAddress: transactionData.tokenAddress || g1TokenAddress,
+        amountWei: transactionData.amountWei,
+        tokenSymbol: transactionData.tokenSymbol,
       };
       if (transactionData.message) {
         params.message = transactionData.message;
@@ -251,6 +274,8 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
             senderTgId: transactionData.senderTgId,
             chainId: transactionData.chainId || 'eip155:137',
             tokenAddress: transactionData.tokenAddress || g1TokenAddress,
+            amountWei: transactionData.amountWei,
+            tokenSymbol: transactionData.tokenSymbol,
           };
           if (transactionData.message) {
             params.message = transactionData.message;
