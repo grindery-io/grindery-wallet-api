@@ -129,6 +129,11 @@ router.get('/app', async (req, res) => {
             }),
           },
         },
+        withDebugMode: {
+          total: await db
+            .collection(USERS_COLLECTION)
+            .countDocuments({ 'debug.enabled': true }),
+        },
       },
     };
 
@@ -209,6 +214,9 @@ type AppStatsResponse = {
         day: number;
         history?: { _id: string; count: number }[];
       };
+    };
+    withDebugMode: {
+      total: number;
     };
   };
 };
