@@ -68,4 +68,36 @@ router.get('/', telegramHashIsValid, async (req, res) => {
   }
 });
 
+/**
+ * POST /v2/me
+ *
+ * @summary Update self
+ * @description Update self user
+ * @tags Me
+ * @security BearerAuth
+ * @param {object} request.body - The request body containing the user properties to update
+ * @return {object} 200 - Success response
+ * @return {object} 404 - Error response if user not found
+ * @example request - Example request body
+ * {
+ *   "debug": { "enabled": true }
+ * }
+ */
+router.post('/', telegramHashIsValid, async (req, res) => {
+  try {
+    const db = await Database.getInstance(req);
+    const result = await db
+      .collection(USERS_COLLECTION)
+      .updateOne({ userTelegramID: res.locals.userId }, { $set: req.body });
+    console.log(`User ${res.locals.userId} updated`);
+    return res.status(200).send(result);
+  } catch (error) {
+    console.error(
+      `Error updating user ${res.locals.userId}`,
+      JSON.stringify(error)
+    );
+    return res.status(500).send({ msg: 'An error occurred', error });
+  }
+});
+
 export default router;
