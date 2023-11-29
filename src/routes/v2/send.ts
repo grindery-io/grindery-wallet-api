@@ -124,7 +124,10 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         },
       });
 
-      console.log(`User [${res.locals.userId}] transaction request completed`);
+      console.log(
+        `User [${res.locals.userId}] transaction request completed`,
+        JSON.stringify(confirmation)
+      );
 
       // Set flood control
       sendTransactionFloodControl[res.locals.userId] =
@@ -198,7 +201,10 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         },
       }
     );
-    console.log(`User [${res.locals.userId}] transaction request completed`);
+    console.log(
+      `User [${res.locals.userId}] transaction request completed`,
+      JSON.stringify(data)
+    );
 
     // Set flood control
     sendTransactionFloodControl[res.locals.userId] =
