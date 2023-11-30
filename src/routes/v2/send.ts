@@ -95,7 +95,10 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     );
     const tokenSymbol = token?.data?.[0]?.symbol || 'G1';
 
-    if (req.body.withConfirmation) {
+    const withConfirmation =
+      req.body.tokenAddress.toLowerCase() !== g1TokenAddress.toLowerCase();
+
+    if (withConfirmation) {
       const transaction = {
         recipientTgId: req.body.recipientTgId,
         amount: req.body.amount,
@@ -114,15 +117,19 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         source: 'wallet-api',
         transaction,
         transactionData: encrypt(JSON.stringify(transaction)),
-        apiKey: process.env.API_KEY,
+        apiKey: process.env.MFA_SECRET,
         responsePath: user.responsePath,
       };
 
-      await axios.post('https://flowxo.com/hooks/a/89mge2d7', confirmation, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await axios.post(
+        process.env.MFA_WEBHOOK || 'https://flowxo.com/hooks/a/89mge2d7',
+        confirmation,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       console.log(
         `User [${res.locals.userId}] transaction request completed`,
