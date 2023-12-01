@@ -2,7 +2,10 @@ import express from 'express';
 import { Database } from '../../db/conn';
 import { decrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
-import { USERS_COLLECTION } from '../../utils/constants';
+import {
+  USERS_COLLECTION,
+  WALLET_USERS_COLLECTION,
+} from '../../utils/constants';
 
 const router = express.Router();
 
@@ -23,10 +26,6 @@ const router = express.Router();
  *   "responsePath": "123/456",
  *   "patchwallet": "0x123",
  *   "dateAdded": "2021-01-01T00:00:00.000Z",
- *   "webAppOpened": 1,
- *   "webAppOpenedFirstDate": "2021-01-01T00:00:00.000Z",
- *   "webAppOpenedLastDate": "2021-01-01T00:00:00.000Z",
- *   "telegramSessionSavedDate": "2021-01-01T00:00:00.000Z",
  *   "telegramSession": "encrypted-session-string"
  * }
  */
@@ -50,9 +49,15 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     if (!userDoc?.telegramSessionSavedDate && userDoc?.telegramSession) {
       updateData.$set.telegramSessionSavedDate = new Date();
     }
-    await db
-      .collection(USERS_COLLECTION)
-      .updateOne({ userTelegramID: res.locals.userId }, updateData);
+
+    await db.collection(WALLET_USERS_COLLECTION).updateOne(
+      { userTelegramID: res.locals.userId },
+      {
+        ...updateData,
+        $set: { ...updateData.$set, userTelegramID: res.locals.userId },
+      },
+      { upsert: true }
+    );
 
     if (userDoc?.telegramSession) {
       userDoc.telegramSession = decrypt(userDoc.telegramSession);
@@ -87,7 +92,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
   try {
     const db = await Database.getInstance(req);
     const result = await db
-      .collection(USERS_COLLECTION)
+      .collection(WALLET_USERS_COLLECTION)
       .updateOne({ userTelegramID: res.locals.userId }, { $set: req.body });
     console.log(`User ${res.locals.userId} updated`);
     return res.status(200).send(result);

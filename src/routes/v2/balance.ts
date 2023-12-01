@@ -4,7 +4,10 @@ import { CHAIN_MAPPING } from '../../utils/chains';
 import BigNumber from 'bignumber.js';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
-import { USERS_COLLECTION } from '../../utils/constants';
+import {
+  USERS_COLLECTION,
+  WALLET_USERS_COLLECTION,
+} from '../../utils/constants';
 import axios from 'axios';
 
 const ERC20 = require('../../abi/ERC20.json');
@@ -103,7 +106,18 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       }
     );
 
-    console.log('balance', JSON.stringify(balance.data));
+    if (balance.data?.result) {
+      await db.collection(WALLET_USERS_COLLECTION).updateOne(
+        { userTelegramID: res.locals.userId },
+        {
+          $set: {
+            balance: balance.data?.result,
+            userTelegramID: res.locals.userId,
+          },
+        },
+        { upsert: true }
+      );
+    }
 
     console.log(`User [${res.locals.userId}] balance request completed`);
     return res.status(200).json(balance.data?.result || {});

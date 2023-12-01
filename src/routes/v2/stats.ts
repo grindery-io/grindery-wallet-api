@@ -5,6 +5,7 @@ import {
   REWARDS_COLLECTION,
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
+  WALLET_USERS_COLLECTION,
 } from '../../utils/constants';
 
 const router = express.Router();
@@ -98,15 +99,15 @@ router.get('/app', async (req, res) => {
     const stats: AppStatsResponse = {
       users: {
         total: await db
-          .collection(USERS_COLLECTION)
+          .collection(WALLET_USERS_COLLECTION)
           .countDocuments({ webAppOpened: { $exists: true } }),
         new: {
-          hour: await db.collection(USERS_COLLECTION).countDocuments({
+          hour: await db.collection(WALLET_USERS_COLLECTION).countDocuments({
             webAppOpenedFirstDate: {
               $gte: new Date(new Date().getTime() - 60 * 60 * 1000),
             },
           }),
-          day: await db.collection(USERS_COLLECTION).countDocuments({
+          day: await db.collection(WALLET_USERS_COLLECTION).countDocuments({
             webAppOpenedFirstDate: {
               $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
             },
@@ -114,15 +115,15 @@ router.get('/app', async (req, res) => {
         },
         withContacts: {
           total: await db
-            .collection(USERS_COLLECTION)
-            .countDocuments({ telegramSession: { $exists: true } }),
+            .collection(WALLET_USERS_COLLECTION)
+            .countDocuments({ telegramSessionSavedDate: { $exists: true } }),
           new: {
-            hour: await db.collection(USERS_COLLECTION).countDocuments({
+            hour: await db.collection(WALLET_USERS_COLLECTION).countDocuments({
               telegramSessionSavedDate: {
                 $gte: new Date(new Date().getTime() - 60 * 60 * 1000),
               },
             }),
-            day: await db.collection(USERS_COLLECTION).countDocuments({
+            day: await db.collection(WALLET_USERS_COLLECTION).countDocuments({
               telegramSessionSavedDate: {
                 $gte: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
               },
@@ -131,7 +132,7 @@ router.get('/app', async (req, res) => {
         },
         withDebugMode: {
           total: await db
-            .collection(USERS_COLLECTION)
+            .collection(WALLET_USERS_COLLECTION)
             .countDocuments({ 'debug.enabled': true }),
         },
       },
@@ -139,7 +140,7 @@ router.get('/app', async (req, res) => {
 
     if (req.query.history && req.query.history === 'true') {
       stats.users.new.history = await db
-        .collection(USERS_COLLECTION)
+        .collection(WALLET_USERS_COLLECTION)
         .aggregate([
           {
             $match: {
@@ -164,7 +165,7 @@ router.get('/app', async (req, res) => {
         .toArray();
 
       stats.users.withContacts.new.history = await db
-        .collection(USERS_COLLECTION)
+        .collection(WALLET_USERS_COLLECTION)
         .aggregate([
           {
             $match: {

@@ -6,7 +6,10 @@ import TGClient from '../../utils/telegramClient';
 import { Database } from '../../db/conn';
 import { encrypt } from '../../utils/crypt';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
-import { USERS_COLLECTION } from '../../utils/constants';
+import {
+  USERS_COLLECTION,
+  WALLET_USERS_COLLECTION,
+} from '../../utils/constants';
 
 const router = express.Router();
 const operations: any = {};
@@ -167,9 +170,18 @@ router.post('/callback', telegramHashIsValid, async (req, res) => {
         {
           $set: {
             telegramSession: encrypt(session),
-            telegramSessionSavedDate: new Date(),
           },
         }
+      );
+      await db.collection(WALLET_USERS_COLLECTION).updateOne(
+        { userTelegramID: res.locals.userId },
+        {
+          $set: {
+            telegramSessionSavedDate: new Date(),
+            userTelegramID: res.locals.userId,
+          },
+        },
+        { upsert: true }
       );
       console.log(`User [${res.locals.userId}] telegram session saved`);
       res.json({
