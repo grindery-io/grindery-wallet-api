@@ -13,6 +13,7 @@ import userActivity from './userActivity';
 import rewards from './rewards';
 import swap from './swap';
 import tokens from './tokens';
+import buy from './buy';
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use('/userActivity', userActivity);
 router.use('/rewards', rewards);
 router.use('/swap', swap);
 router.use('/tokens', tokens);
+router.use('/buy', buy);
 
 export default router;
