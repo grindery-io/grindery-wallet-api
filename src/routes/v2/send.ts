@@ -87,12 +87,6 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       }&address=${req.body.tokenAddress || g1TokenAddress}`
     );
 
-    const amountWei = String(
-      Web3.utils.toBN(
-        parseFloat(req.body.amount as string) *
-          10 ** (token?.data?.[0]?.decimals || 18)
-      )
-    );
     const tokenSymbol = token?.data?.[0]?.symbol || 'G1';
 
     const withConfirmation =
@@ -108,7 +102,6 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         recipientName: req.body.recipientName,
         chainId: `eip155:${req.body.chainId || '137'}`,
         tokenAddress: req.body.tokenAddress || g1TokenAddress,
-        amountWei,
         tokenSymbol,
       };
 
@@ -152,7 +145,6 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         senderTgId: res.locals.userId,
         chainId: `eip155:${req.body.chainId || '137'}`,
         tokenAddress: req.body.tokenAddress || g1TokenAddress,
-        amountWei,
         tokenSymbol,
       };
       if (req.body.message) {
@@ -178,7 +170,6 @@ router.post('/', telegramHashIsValid, async (req, res) => {
             senderTgId: res.locals.userId,
             chainId: `eip155:${req.body.chainId || '137'}`,
             tokenAddress: req.body.tokenAddress || g1TokenAddress,
-            amountWei,
             tokenSymbol,
           };
           if (req.body.message) {
@@ -261,7 +252,6 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
         senderTgId: transactionData.senderTgId,
         chainId: transactionData.chainId || 'eip155:137',
         tokenAddress: transactionData.tokenAddress || g1TokenAddress,
-        amountWei: transactionData.amountWei,
         tokenSymbol: transactionData.tokenSymbol,
       };
       if (transactionData.message) {
@@ -287,7 +277,6 @@ router.post('/confirm', apiKeyIsValid, async (req, res) => {
             senderTgId: transactionData.senderTgId,
             chainId: transactionData.chainId || 'eip155:137',
             tokenAddress: transactionData.tokenAddress || g1TokenAddress,
-            amountWei: transactionData.amountWei,
             tokenSymbol: transactionData.tokenSymbol,
           };
           if (transactionData.message) {
