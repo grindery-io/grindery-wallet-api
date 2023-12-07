@@ -50,7 +50,7 @@ const telegramHashIsValid = async (req: any, res: any, next: any) => {
     next();
   } else {
     const secretKey = createHash('sha256')
-      .update(process.env.TEST_BOT_TOKEN || '')
+      .update(process.env.BOT_TOKEN || '')
       .digest();
 
     const checkString = Object.keys(data)
