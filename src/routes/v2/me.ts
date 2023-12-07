@@ -37,6 +37,10 @@ router.get('/', telegramHashIsValid, async (req, res) => {
       .collection(USERS_COLLECTION)
       .findOne({ userTelegramID: res.locals.userId });
 
+    if (!userDoc?.userTelegramID) {
+      return res.status(404).send({ msg: 'User not found' });
+    }
+
     const updateData: any = {
       $inc: { webAppOpened: 1 },
       $set: {
