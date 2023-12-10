@@ -2,6 +2,7 @@ export const TRANSFERS_COLLECTION = 'transfers';
 export const USERS_COLLECTION = 'users';
 export const REWARDS_COLLECTION = 'rewards';
 export const WALLET_USERS_COLLECTION = 'wallet-users';
+export const SWAPS_COLLECTION = 'swaps';
 
 export const TRANSFERS_TESTS_COLLECTION = 'transfers-test';
 export const USERS_TESTS_COLLECTION = 'users-test';

@@ -14,6 +14,7 @@ import rewards from './rewards';
 import swap from './swap';
 import tokens from './tokens';
 import buy from './buy';
+import stake from './stake';
 
 const router = express.Router();
 
@@ -32,5 +33,6 @@ router.use('/rewards', rewards);
 router.use('/swap', swap);
 router.use('/tokens', tokens);
 router.use('/buy', buy);
+router.use('/stake', stake);
 
 export default router;
