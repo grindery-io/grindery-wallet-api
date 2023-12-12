@@ -3,6 +3,7 @@ import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
 import {
   SWAPS_COLLECTION,
+  TRANSACTION_STATUS,
   TRANSFERS_COLLECTION,
   USERS_COLLECTION,
 } from '../../utils/constants';
@@ -161,7 +162,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
     const transactionsNotInDb: ExternalTransaction[] = [
       ...chainTransaction.filter(
         (chainTransaction: Transaction) =>
-          !dbTransactions.find(
+          !!dbTransactions.find(
             (dbTransaction: any) =>
               dbTransaction?.transactionHash?.toLowerCase() ===
               chainTransaction.hash.toLowerCase()
@@ -169,7 +170,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
       ),
       ...chainTransfers.filter(
         (chainTransfer: Transfer) =>
-          !dbTransactions.find(
+          !!dbTransactions.find(
             (dbTransaction: any) =>
               dbTransaction.transactionHash?.toLowerCase() ===
               chainTransfer.transactionHash.toLowerCase()
@@ -240,7 +241,11 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
 
     const userSwaps = await db
       .collection(SWAPS_COLLECTION)
-      .find({ userTelegramID: userId })
+      .find({
+        userTelegramID: userId,
+        chainId: 'eip155:137',
+        status: TRANSACTION_STATUS.SUCCESS,
+      })
       .toArray();
 
     const swapSummary = userSwaps.reduce(
@@ -283,25 +288,37 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
 
     for (const tokenAddress in swapSummary) {
       const swapInfo = swapSummary[tokenAddress];
-      const tokenOutPriceRes = await axios.post<GetTokenPriceResponseType>(
-        `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
-        {
-          jsonrpc: '2.0',
-          method: 'ankr_getTokenPrice',
-          params: {
-            blockchain: req.query.chain || 'polygon',
-            contractAddress: tokenAddress,
-          },
-          id: new Date().toString(),
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
+      let tokenOutPrice;
+
+      // Find the price in the existing array
+      const priceInfo = prices.find(
+        (p) => p.contractAddress.toLowerCase() === tokenAddress.toLowerCase()
       );
-      const tokenOutPrice = tokenOutPriceRes.data?.result?.usdPrice || '0';
+      if (priceInfo && priceInfo.usdPrice) {
+        tokenOutPrice = priceInfo.usdPrice;
+      } else {
+        const tokenOutPriceRes = await axios.post<GetTokenPriceResponseType>(
+          `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
+          {
+            jsonrpc: '2.0',
+            method: 'ankr_getTokenPrice',
+            params: {
+              blockchain: req.query.chain || 'polygon',
+              contractAddress: tokenAddress,
+            },
+            id: new Date().toString(),
+          },
+          {
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+        tokenOutPrice = tokenOutPriceRes.data?.result?.usdPrice || '0';
+      }
+
       const decimalFactor = 10 ** swapInfo.decimals;
       const swapValueInUSD =
-        (swapInfo.totalAmountOut / decimalFactor) * parseFloat(tokenOutPrice);
+        (swapInfo.totalAmountOut / decimalFactor) *
+        parseFloat(tokenOutPrice || '0');
       totalSwapsValueInUSD += swapValueInUSD;
     }
 
