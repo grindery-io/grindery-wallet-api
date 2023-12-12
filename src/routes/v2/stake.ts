@@ -162,7 +162,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
     const transactionsNotInDb: ExternalTransaction[] = [
       ...chainTransaction.filter(
         (chainTransaction: Transaction) =>
-          !!dbTransactions.find(
+          !dbTransactions.find(
             (dbTransaction: any) =>
               dbTransaction?.transactionHash?.toLowerCase() ===
               chainTransaction.hash.toLowerCase()
@@ -170,7 +170,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
       ),
       ...chainTransfers.filter(
         (chainTransfer: Transfer) =>
-          !!dbTransactions.find(
+          !dbTransactions.find(
             (dbTransaction: any) =>
               dbTransaction.transactionHash?.toLowerCase() ===
               chainTransfer.transactionHash.toLowerCase()
@@ -257,7 +257,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
         if (!acc[tokenAddress]) {
           acc[tokenAddress] = { totalAmountOut: 0 };
         }
-        acc[tokenAddress].totalAmountOut += parseInt(swap.amountOut);
+        acc[tokenAddress].totalAmountOut += parseFloat(swap.amountOut);
         return acc;
       },
       {}
