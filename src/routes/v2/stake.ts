@@ -1,7 +1,11 @@
 import express from 'express';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
 import { Database } from '../../db/conn';
-import { TRANSFERS_COLLECTION, USERS_COLLECTION } from '../../utils/constants';
+import {
+  SWAPS_COLLECTION,
+  TRANSFERS_COLLECTION,
+  USERS_COLLECTION,
+} from '../../utils/constants';
 import axios from 'axios';
 import _ from 'lodash';
 import { apiKeyIsValid } from '../../utils/apiKeyIsValid';
@@ -234,8 +238,40 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
       .reduce((a: number, b: number) => a + b, 0)
       .toFixed(2);
 
+    const userSwaps = await db
+      .collection(SWAPS_COLLECTION)
+      .find({ userTelegramID: userId })
+      .toArray();
+
+    let totalSwapsValueInUSD = 0;
+
+    for (const swap of userSwaps) {
+      const tokenOutPriceRes = await axios.post<GetTokenPriceResponseType>(
+        `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
+        {
+          jsonrpc: '2.0',
+          method: 'ankr_getTokenPrice',
+          params: {
+            blockchain: req.query.chain || 'polygon',
+            contractAddress: swap.tokenOut,
+          },
+          id: new Date().toString(),
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      const tokenOutPrice = tokenOutPriceRes.data?.result?.usdPrice || '0';
+      const swapValueInUSD =
+        (parseFloat(swap.amountOut) / 10 ** 18) * parseFloat(tokenOutPrice);
+      totalSwapsValueInUSD += swapValueInUSD;
+    }
+
+    const totalStakedAdjusted = parseFloat(totalStaked) - totalSwapsValueInUSD;
+
     console.log(`User [${userId}] staked amount request completed`);
-    return res.status(200).send({ amount: totalStaked || '0' });
+    return res.status(200).send({ amount: totalStakedAdjusted || '0' });
   } catch (error) {
     console.error(
       `Error getting staked amount for user ${userId}`,
