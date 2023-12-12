@@ -243,17 +243,30 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
       .find({ userTelegramID: userId })
       .toArray();
 
-    let totalSwapsValueInUSD = 0;
+    const swapSummary = userSwaps.reduce(
+      (
+        acc: { [x: string]: { totalAmountOut: number } },
+        swap: { tokenOut: any; amountOut: string }
+      ) => {
+        const tokenAddress = swap.tokenOut;
+        if (!acc[tokenAddress]) {
+          acc[tokenAddress] = { totalAmountOut: 0 };
+        }
+        acc[tokenAddress].totalAmountOut += parseInt(swap.amountOut);
+        return acc;
+      },
+      {}
+    );
 
-    for (const swap of userSwaps) {
-      const tokenOutPriceRes = await axios.post<GetTokenPriceResponseType>(
+    for (const tokenAddress in swapSummary) {
+      const tokenDecimalsRes = await axios.post(
         `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
         {
           jsonrpc: '2.0',
-          method: 'ankr_getTokenPrice',
+          method: 'ankr_getTokenDecimals',
           params: {
             blockchain: req.query.chain || 'polygon',
-            contractAddress: swap.tokenOut,
+            contractAddress: tokenAddress,
           },
           id: new Date().toString(),
         },
@@ -262,9 +275,33 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
         }
       );
 
+      const tokenDecimals = tokenDecimalsRes.data?.result?.decimals || 18;
+      swapSummary[tokenAddress].decimals = tokenDecimals;
+    }
+
+    let totalSwapsValueInUSD = 0;
+
+    for (const tokenAddress in swapSummary) {
+      const swapInfo = swapSummary[tokenAddress];
+      const tokenOutPriceRes = await axios.post<GetTokenPriceResponseType>(
+        `https://rpc.ankr.com/multichain/${process.env.ANKR_KEY || ''}`,
+        {
+          jsonrpc: '2.0',
+          method: 'ankr_getTokenPrice',
+          params: {
+            blockchain: req.query.chain || 'polygon',
+            contractAddress: tokenAddress,
+          },
+          id: new Date().toString(),
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
       const tokenOutPrice = tokenOutPriceRes.data?.result?.usdPrice || '0';
+      const decimalFactor = 10 ** swapInfo.decimals;
       const swapValueInUSD =
-        (parseFloat(swap.amountOut) / 10 ** 18) * parseFloat(tokenOutPrice);
+        (swapInfo.totalAmountOut / decimalFactor) * parseFloat(tokenOutPrice);
       totalSwapsValueInUSD += swapValueInUSD;
     }
 
