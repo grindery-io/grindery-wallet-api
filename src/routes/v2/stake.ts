@@ -322,10 +322,12 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
       totalSwapsValueInUSD += swapValueInUSD;
     }
 
-    const totalStakedAdjusted = parseFloat(totalStaked) - totalSwapsValueInUSD;
+    const totalStakedAdjusted = (
+      parseFloat(totalStaked) - totalSwapsValueInUSD
+    ).toFixed(2);
 
     console.log(`User [${userId}] staked amount request completed`);
-    return res.status(200).send({ amount: totalStakedAdjusted || '0' });
+    return res.status(200).send({ amount: totalStakedAdjusted || '0.00' });
   } catch (error) {
     console.error(
       `Error getting staked amount for user ${userId}`,
