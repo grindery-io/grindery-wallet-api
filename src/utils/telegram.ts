@@ -24,12 +24,10 @@ export const deleteUserTelegramSession = async (
       {
         userTelegramID: telegramUserId,
         telegramSession: { $exists: true },
-        telegramSessionSavedDate: { $exists: true },
       },
       {
         $unset: {
           telegramSession: '',
-          telegramSessionSavedDate: '',
         },
       }
     );
