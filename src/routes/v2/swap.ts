@@ -85,7 +85,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
     }
 
     const tokenIn = await axios.get(
-      `https://shortcuts-backend-dynamic-int.herokuapp.com/api/v1/baseTokens?chainId=${
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
         req.body.chainId || '137'
       }&address=${req.body.tokenIn}`
     );
@@ -170,7 +170,7 @@ router.get('/', telegramHashIsValid, async (req, res) => {
     }
 
     const tokenIn = await axios.get(
-      `https://shortcuts-backend-dynamic-int.herokuapp.com/api/v1/baseTokens?chainId=${
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
         req.query.chainId || '137'
       }&address=${req.query.tokenIn}`
     );
