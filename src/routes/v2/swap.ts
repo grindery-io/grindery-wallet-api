@@ -111,6 +111,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         gas: req.body.gas,
         priceImpact: req.body.priceImpact,
         chainId: `eip155:${req.body.chainId || '137'}`,
+        delegatecall: 1,
       },
     };
 
