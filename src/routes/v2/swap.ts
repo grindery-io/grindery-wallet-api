@@ -92,7 +92,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
 
     const tokenOutRes = await axios.get(
       `https://api.enso.finance/api/v1/baseTokens?chainId=${
-        req.body.chainOut || '137'
+        req.body.chainId || req.body.chainOut || '137'
       }&address=${req.body.tokenOut}`
     );
 
@@ -128,7 +128,7 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         priceImpact: req.body.priceImpact,
         chainId: `eip155:${req.body.chainId || '137'}`,
         chainIn: `eip155:${req.body.chainId || req.body.chainIn || '137'}`,
-        chainOut: `eip155:${req.body.chainId || req.body.chainIn || '137'}`,
+        chainOut: `eip155:${req.body.chainId || req.body.chainOut || '137'}`,
         tokenInSymbol: tokenIn.symbol || '',
         tokenOutSymbol: tokenOut.symbol || '',
         delegatecall: 1,
