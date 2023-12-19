@@ -84,16 +84,32 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
-    const tokenIn = await axios.get(
+    const tokenInRes = await axios.get(
       `https://api.enso.finance/api/v1/baseTokens?chainId=${
-        req.body.chainId || '137'
+        req.body.chainId || req.body.chainIn || '137'
       }&address=${req.body.tokenIn}`
     );
 
+    const tokenOutRes = await axios.get(
+      `https://api.enso.finance/api/v1/baseTokens?chainId=${
+        req.body.chainOut || '137'
+      }&address=${req.body.tokenOut}`
+    );
+
+    const tokenIn = tokenInRes?.data?.[0];
+    const tokenOut = tokenOutRes?.data?.[0];
+
+    if (!tokenIn) {
+      return res.status(400).json({ error: 'Invalid tokenIn' });
+    }
+
+    if (!tokenOut) {
+      return res.status(400).json({ error: 'Invalid tokenOut' });
+    }
+
     const amountIn = String(
       Web3.utils.toBN(
-        parseFloat(req.body.amountIn as string) *
-          10 ** (tokenIn?.data?.[0]?.decimals || 18)
+        parseFloat(req.body.amountIn as string) * 10 ** (tokenIn.decimals || 18)
       )
     );
 
@@ -111,6 +127,10 @@ router.post('/', telegramHashIsValid, async (req, res) => {
         gas: req.body.gas,
         priceImpact: req.body.priceImpact,
         chainId: `eip155:${req.body.chainId || '137'}`,
+        chainIn: `eip155:${req.body.chainId || req.body.chainIn || '137'}`,
+        chainOut: `eip155:${req.body.chainId || req.body.chainIn || '137'}`,
+        tokenInSymbol: tokenIn.symbol || '',
+        tokenOutSymbol: tokenOut.symbol || '',
         delegatecall: 1,
       },
     };
