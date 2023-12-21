@@ -81,13 +81,38 @@ router.post('/', telegramHashIsValid, async (req, res) => {
       return res.status(400).json({ error: 'User is banned' });
     }
 
-    const token = await axios.get(
-      `https://api.enso.finance/api/v1/baseTokens?chainId=${
-        req.body.chainId || '137'
-      }&address=${req.body.tokenAddress || g1TokenAddress}`
-    );
+    let token: any = null;
 
-    const tokenSymbol = token?.data?.[0]?.symbol || 'G1';
+    try {
+      const tokenRes = await axios.get(
+        `https://api.enso.finance/api/v1/baseTokens?chainId=${
+          req.body.chainId || '137'
+        }&address=${req.body.tokenAddress || g1TokenAddress}`
+      );
+      token = tokenRes.data?.[0];
+    } catch (error) {
+      //
+    }
+
+    if (!token) {
+      try {
+        const tokenRes2 = await axios.get(
+          `https://li.quest/v1/token?chain=${req.body.chainId || '137'}&token=${
+            req.body.tokenAddress || g1TokenAddress
+          }`
+        );
+
+        token = tokenRes2.data;
+      } catch (error) {
+        //
+      }
+    }
+
+    if (!token) {
+      return res.status(400).json({ error: 'Invalid token' });
+    }
+
+    const tokenSymbol = token.symbol || 'G1';
 
     const withConfirmation =
       req.body.tokenAddress.toLowerCase() !== g1TokenAddress.toLowerCase();
