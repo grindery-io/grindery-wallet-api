@@ -230,7 +230,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
     for (const swapToken of swapTokensWithAmounts) {
       swapTokensPromises.push(
         axios.get(
-          `https://api.enso.finance/api/v1/baseTokens?chainId=137&address=${swapToken.contractAddress}`
+          `https://li.quest/v1/token?chain=137&token=${swapToken.contractAddress}`
         )
       );
     }
@@ -261,7 +261,7 @@ const getStakedAmount = async (req: any, res: any, userId: string) => {
     const tokensRes = await Promise.all(swapTokensPromises);
 
     const prices = pricesRes.map((p) => p.data?.result);
-    const decimals = tokensRes.map((t) => t.data?.[0]);
+    const decimals = tokensRes.map((t) => t.data);
 
     const totalExternal = tokensWithAmounts
       .map(
