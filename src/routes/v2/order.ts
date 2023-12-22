@@ -14,7 +14,7 @@ const router = express.Router();
  * @param {string} add.query - usd amount to add
  * @return {object} 200 - Success response
  */
-router.get('/', telegramHashIsValid, async (req, res) => {
+router.get('/quote', telegramHashIsValid, async (req, res) => {
   console.log(`User [${res.locals.userId}] requested convert quote`);
   if (!req.query.convert || typeof req.query.convert !== 'string') {
     return res.status(400).json({ error: 'Invalid convert amount' });
