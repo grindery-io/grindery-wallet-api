@@ -23,12 +23,8 @@ router.get('/quote', telegramHashIsValid, async (req, res) => {
     return res.status(400).json({ error: 'Invalid add amount' });
   }
   try {
-    const result = await axios.post(
-      `https://bot-auth-api.grindery.org/v1/tge/conversion-information`,
-      {
-        g1Quantity: parseFloat(req.query.convert),
-        usdQuantity: parseFloat(req.query.add),
-      },
+    const result = await axios.get(
+      `https://bot-auth-api.grindery.org/v1/tge/conversion-information&g1Quantity=${req.query.convert}&usdQuantity=req.query.add`,
       {
         headers: {
           Authorization: `Bearer ${process.env.API_KEY}`,
