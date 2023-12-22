@@ -24,7 +24,7 @@ router.get('/quote', telegramHashIsValid, async (req, res) => {
   }
   try {
     const result = await axios.get(
-      `https://bot-auth-api.grindery.org/v1/tge/conversion-information&g1Quantity=${req.query.convert}&usdQuantity=req.query.add`,
+      `https://bot-auth-api.grindery.org/v1/tge/conversion-information?g1Quantity=${req.query.convert}&usdQuantity=${req.query.add}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.API_KEY}`,
