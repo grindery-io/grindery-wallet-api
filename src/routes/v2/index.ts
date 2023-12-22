@@ -15,6 +15,7 @@ import swap from './swap';
 import tokens from './tokens';
 import buy from './buy';
 import stake from './stake';
+import order from './order';
 
 const router = express.Router();
 
@@ -34,5 +35,6 @@ router.use('/swap', swap);
 router.use('/tokens', tokens);
 router.use('/buy', buy);
 router.use('/stake', stake);
+router.use('/order', order);
 
 export default router;
