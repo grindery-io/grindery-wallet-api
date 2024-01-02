@@ -5,8 +5,16 @@ const telegramHashIsValid = async (req: any, res: any, next: any) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
   const authorization = req.headers['authorization'];
-  const hash = authorization?.split(' ')[1];
-  const data = Object.fromEntries(new URLSearchParams(hash));
+  const initData = authorization?.split(' ')[1];
+  let data = Object.fromEntries(new URLSearchParams(initData));
+  if (!data.hash) {
+    data = Object.fromEntries(
+      new URLSearchParams(decodeURIComponent(initData))
+    );
+  }
+  if (!data.hash) {
+    return res.status(403).json({ error: 'User is not authenticated' });
+  }
   if (data.query_id) {
     const encoder = new TextEncoder();
     const checkString = Object.keys(data)
