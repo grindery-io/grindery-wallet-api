@@ -1,6 +1,8 @@
 import express, { Request } from 'express';
 import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
+import { Database } from '../../db/conn';
+import { GX_QUOTE_COLLECTION } from '../../utils/constants';
 const router = express.Router();
 
 /**
@@ -137,8 +139,12 @@ router.get('/:orderId', telegramHashIsValid, async (req: Request, res) => {
         },
       }
     );
+    const db = await Database.getInstance(req);
+    const quote = await db.collection(GX_QUOTE_COLLECTION).findOne({
+      quoteId: req.params.orderId,
+    });
     console.log(`User [${res.locals.userId}] order status request completed`);
-    return res.status(200).send(result.data);
+    return res.status(200).send({ order: result.data, quote });
   } catch (error) {
     console.error(
       `Error getting g1 order status for user ${res.locals.userId}`,
@@ -189,10 +195,7 @@ router.patch('/', telegramHashIsValid, async (req, res) => {
     console.log(`User [${res.locals.userId}] order payment request completed`);
     return res.status(200).send(result.data);
   } catch (error) {
-    console.error(
-      `Error paying g1 order for user ${res.locals.userId}`,
-      JSON.stringify(error)
-    );
+    console.error(`Error paying g1 order for user ${res.locals.userId}`, error);
     return res.status(500).send({ success: false, error: 'An error occurred' });
   }
 });
