@@ -131,7 +131,7 @@ router.get('/:orderId', telegramHashIsValid, async (req: Request, res) => {
     return res.status(400).json({ error: 'Invalid order ID' });
   }
   try {
-    const result = await axios.get(
+    /*const result = await axios.get(
       `https://bot-auth-api.grindery.org/v1/tge/order?orderId=${req.params.orderId}`,
       {
         headers: {
@@ -140,7 +140,19 @@ router.get('/:orderId', telegramHashIsValid, async (req: Request, res) => {
       }
     );
     console.log(`User [${res.locals.userId}] order status request completed`);
-    return res.status(200).send(result.data);
+    return res.status(200).send(result.data);*/
+
+    const result = await axios.get(
+      `https://bot-auth-api.grindery.org/v1/tge/orders?userTelegramID=${res.locals.userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.API_KEY}`,
+        },
+      }
+    );
+
+    console.log(`User [${res.locals.userId}] order status request completed`);
+    return res.status(200).send(result.data?.[0] || null);
   } catch (error) {
     console.error(
       `Error getting g1 order status for user ${res.locals.userId}`,
@@ -177,9 +189,9 @@ router.patch('/', telegramHashIsValid, async (req, res) => {
     const result = await axios.patch(
       `https://bot-auth-api.grindery.org/v1/tge/order`,
       {
-        quoteId: req.body.orderId,
+        orderId: req.body.orderId,
         tokenAddress: req.body.tokenAddress,
-        chainId: req.body.chainId,
+        chainId: `eip155:${req.body.chainId}`,
         userTelegramID: res.locals.userId,
       },
       {
