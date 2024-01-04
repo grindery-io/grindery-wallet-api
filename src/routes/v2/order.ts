@@ -139,16 +139,12 @@ router.get('/:orderId', telegramHashIsValid, async (req: Request, res) => {
         },
       }
     );
-    const db = await Database.getInstance(req);
-    const quote = await db.collection(GX_QUOTE_COLLECTION).findOne({
-      quoteId: req.params.orderId,
-    });
     console.log(`User [${res.locals.userId}] order status request completed`);
-    return res.status(200).send({ order: result.data, quote });
+    return res.status(200).send(result.data);
   } catch (error) {
     console.error(
       `Error getting g1 order status for user ${res.locals.userId}`,
-      JSON.stringify(error)
+      error
     );
     return res.status(500).send({ success: false, error: 'An error occurred' });
   }
