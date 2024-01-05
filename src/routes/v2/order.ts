@@ -1,8 +1,6 @@
 import express, { Request } from 'express';
 import axios from 'axios';
 import telegramHashIsValid from '../../utils/telegramHashIsValid';
-import { Database } from '../../db/conn';
-import { GX_QUOTE_COLLECTION } from '../../utils/constants';
 const router = express.Router();
 
 /**
